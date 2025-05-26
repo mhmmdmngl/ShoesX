@@ -1,0 +1,594 @@
+﻿@{
+    ViewData["Title"] = "Shoe Catalog";
+}
+@Html.AntiForgeryToken()
+
+<div class="catalog-page">
+    <!-- Header Section -->
+    <div class="catalog-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1>Premium Shoe Collection</h1>
+                <div class="stats-info">
+                    <span class="product-count">Loading...</span>
+                    <span class="separator">•</span>
+                    <span class="last-updated">Updated Today</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="view-controls">
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid" title="Grid View">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="view-btn" data-view="list" title="List View">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+
+                    <div class="sort-controls">
+                        <select class="sort-select" id="sortSelect">
+                            <option value="productCode">Product Code</option>
+                            <option value="price">Price (Low-High)</option>
+                            <option value="price-desc">Price (High-Low)</option>
+                            <option value="color">Color</option>
+                            <option value="actualStock">Stock Level</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Summary Fixed -->
+    <div id="cartSummary" class="cart-summary" style="display: none;">
+        <div class="cart-summary-content">
+            <div class="cart-header">
+                <h3><i class="fas fa-shopping-cart"></i> Shopping Cart</h3>
+                <button class="cart-toggle" onclick="window.toggleCartDetails()">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            <div class="cart-info">
+                <div class="cart-count-section">
+                    <div class="cart-boxes">
+                        <span class="cart-count">0 boxes</span>
+                    </div>
+                    <div class="cart-pieces">
+                        <span class="cart-pieces-count">0 pieces</span>
+                    </div>
+                </div>
+                <div class="cart-total-section">
+                    <span class="cart-total">€0.00</span>
+                </div>
+            </div>
+            <div class="cart-details" id="cartDetails" style="display: none;">
+                <div class="cart-items-list" id="cartItemsList"></div>
+                <div class="cart-actions">
+                    <button class="btn-cart-clear" onclick="window.clearCart()">
+                        <i class="fas fa-trash"></i>
+                        Clear Cart
+                    </button>
+                    <button class="btn-cart-checkout" onclick="window.proceedToCheckout()">
+                        <i class="fas fa-credit-card"></i>
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading products...</p>
+    </div>
+
+    <!-- Products Grid -->
+    <div id="productsGrid" class="products-grid" style="display: none;">
+        <!-- Products will be dynamically loaded here -->
+    </div>
+
+    <!-- No Results State -->
+    <div id="noResults" class="no-results" style="display: none;">
+        <div class="no-results-content">
+            <i class="fas fa-search"></i>
+            <h3>No products found</h3>
+            <p>Try adjusting your filters or search terms</p>
+            <button class="btn-clear-filters" onclick="window.clearAllFilters()">
+                <i class="fas fa-times"></i>
+                Clear All Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="pagination-container" style="display: none;">
+        <!-- Pagination will be generated here -->
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- CSS Yükleme -->
+<link href="~/css/shoeindex.css" rel="stylesheet" />
+
+<!-- JavaScript Dosyalarını DOĞRU SIRADA Yükle -->
+<script src="~/js/CartManager.js"></script>
+<script src="~/js/ProductManager.js"></script>
+<script src="~/js/ModalManager.js"></script>
+<script src="~/js/MainApp.js"></script>
+
+<script>
+    // Tüm JavaScript class'ları yüklenene kadar bekle
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, checking dependencies...');
+
+        // Bağımlılıkları kontrol et
+        let checkCount = 0;
+        const maxChecks = 50; // 5 saniye timeout
+
+        function checkDependencies() {
+            checkCount++;
+
+            if (typeof CartManager !== 'undefined' &&
+                typeof ProductManager !== 'undefined' &&
+                typeof ModalManager !== 'undefined' &&
+                typeof MainApp !== 'undefined') {
+
+                console.log('All dependencies loaded, initializing...');
+
+                // MainApp zaten global olarak oluşturuldu, sadece kontrol et
+                if (window.mainApp && typeof window.mainApp.init === 'function') {
+                    console.log('MainApp found, initialization in progress...');
+                } else {
+                    console.error('MainApp not found or init method missing');
+                }
+
+            } else if (checkCount < maxChecks) {
+                console.log(`Waiting for dependencies... (${checkCount}/${maxChecks})`);
+                setTimeout(checkDependencies, 100);
+            } else {
+                console.error('Timeout waiting for dependencies');
+                console.log('Available classes:', {
+                    CartManager: typeof CartManager,
+                    ProductManager: typeof ProductManager,
+                    ModalManager: typeof ModalManager,
+                    MainApp: typeof MainApp
+                });
+            }
+        }
+
+        checkDependencies();
+    });
+
+    // Global güvenli fonksiyonlar - hata vermeyecek şekilde
+    window.applyFilters = function() {
+        if (window.mainApp && window.mainApp.productManager) {
+            window.mainApp.productManager.filterProducts();
+        } else {
+            console.warn('MainApp not ready for applyFilters');
+        }
+    };
+
+    window.clearAllFilters = function() {
+        if (window.mainApp && window.mainApp.productManager) {
+            window.mainApp.productManager.clearAllFilters();
+        } else {
+            console.warn('MainApp not ready for clearAllFilters');
+        }
+    };
+
+    window.toggleCartDetails = function() {
+        if (window.mainApp && window.mainApp.cartManager) {
+            window.mainApp.cartManager.toggleCartDetails();
+        } else {
+            console.warn('MainApp not ready for toggleCartDetails');
+        }
+    };
+
+    window.clearCart = function() {
+        if (window.mainApp && window.mainApp.cartManager) {
+            window.mainApp.cartManager.clearCart();
+        } else {
+            console.warn('MainApp not ready for clearCart');
+        }
+    };
+
+    window.proceedToCheckout = function() {
+        if (window.mainApp && window.mainApp.cartManager) {
+            window.mainApp.cartManager.proceedToCheckout();
+        } else {
+            console.warn('MainApp not ready for proceedToCheckout');
+        }
+    };
+
+    window.closeProductModal = function() {
+        if (window.mainApp && window.mainApp.modalManager) {
+            window.mainApp.modalManager.closeProductModal();
+        } else {
+            console.warn('MainApp not ready for closeProductModal');
+        }
+    };
+
+    // Global güvenli cart display fonksiyonları
+    window.updateCartDisplay = function() {
+        if (window.mainApp && window.mainApp.cartManager) {
+            window.mainApp.cartManager.updateCartDisplay();
+        }
+    };
+
+    window.updateCartBadge = function() {
+        if (window.mainApp && window.mainApp.cartManager) {
+            window.mainApp.cartManager.updateCartBadge();
+        }
+    };
+
+    // Layout'tan gelen interval hatalarını önle
+    const originalSetInterval = window.setInterval;
+    window.setInterval = function(callback, delay) {
+        const safeCallback = function() {
+            try {
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            } catch (error) {
+                if (error.message && (error.message.includes('shoeStore is not defined') || error.message.includes('mainApp is not defined'))) {
+                    console.warn('Prevented undefined error in interval:', error.message);
+                } else {
+                    console.error('Interval error:', error);
+                }
+            }
+        };
+        return originalSetInterval.call(this, safeCallback, delay);
+    };
+
+    // Error handler - layout'tan gelen hataları önler
+    window.addEventListener('error', function(e) {
+        if (e.message && (e.message.includes('shoeStore is not defined') || e.message.includes('mainApp is not defined'))) {
+            console.warn('Prevented global error:', e.message);
+            e.preventDefault();
+            return true;
+        }
+    });
+
+    console.log('Customer view scripts loaded');
+</script>
+
+<style>
+    /* Clean Cart Summary Styles */
+    .cart-summary {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e5e7eb;
+        min-width: 320px;
+        max-width: 400px;
+        z-index: 1000;
+    }
+
+    .cart-summary-content {
+        padding: 1.5rem;
+    }
+
+    .cart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+
+        .cart-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+    .cart-toggle {
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+        .cart-toggle:hover {
+            background: #f9fafb;
+            color: #2563eb;
+        }
+
+    .cart-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .cart-count-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .cart-boxes {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .cart-pieces {
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .cart-total-section {
+        text-align: right;
+    }
+
+    .cart-total {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #2563eb;
+    }
+
+    .cart-details {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .cart-items-list {
+        margin-bottom: 1rem;
+    }
+
+    .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+    .cart-item-info {
+        flex: 1;
+        margin-right: 1rem;
+    }
+
+    .cart-item-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #1f2937;
+    }
+
+    .cart-item-details {
+        font-size: 0.85rem;
+        color: #6b7280;
+        line-height: 1.4;
+    }
+
+    .cart-item-pricing {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .cart-item-total-price {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .cart-item-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: #f9fafb;
+        border-radius: 6px;
+        padding: 0.125rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .qty-btn {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        color: #6b7280;
+    }
+
+        .qty-btn:hover {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+    .qty-display {
+        min-width: 24px;
+        text-align: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1f2937;
+        padding: 0 0.25rem;
+    }
+
+    .remove-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+        .remove-btn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+    .cart-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .btn-cart-clear, .btn-cart-checkout {
+        padding: 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-cart-clear {
+        background: #f9fafb;
+        color: #6b7280;
+        border: 2px solid #e5e7eb;
+    }
+
+        .btn-cart-clear:hover {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+    .btn-cart-checkout {
+        background: #2563eb;
+        color: white;
+        border: none;
+    }
+
+        .btn-cart-checkout:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+    /* Badge Styles */
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge-assorted {
+        background: #2563eb;
+        color: white;
+    }
+
+    .assorted-badge {
+        background: #2563eb;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.125rem 0.375rem;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #2563eb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @@keyframes spin {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .cart-summary
+
+    {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 12px 12px 0 0;
+        max-width: none;
+        min-width: auto;
+    }
+
+    .cart-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .cart-total {
+        font-size: 1.5rem;
+    }
+
+    }
+</style>

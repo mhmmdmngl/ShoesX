@@ -1,0 +1,929 @@
+﻿@model WholesaleShoeStore.Controllers.CheckoutViewModel
+@{
+    ViewData["Title"] = "Checkout - Complete Your Order";
+}
+
+<style>
+    .checkout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+
+    .checkout-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+        .checkout-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkout-header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+    .checkout-progress {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .progress-step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6b7280;
+    }
+
+        .progress-step.active {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .progress-step .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+        }
+
+        .progress-step.active .step-number {
+            background: #2563eb;
+        }
+
+    .checkout-content {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 3rem;
+    }
+
+    .checkout-form {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+    }
+
+    .form-section {
+        margin-bottom: 2.5rem;
+    }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #d1d5db;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+    .form-label {
+        display: block;
+        font-weight: 500;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+    .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .payment-method {
+        position: relative;
+        cursor: pointer;
+    }
+
+        .payment-method input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .payment-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem;
+        border: 2px solid #d1d5db;
+        border-radius: 12px;
+        background: #ffffff;
+        transition: all 0.2s ease;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .payment-method input:checked + .payment-card {
+        border-color: #2563eb;
+        background: rgba(37, 99, 235, 0.05);
+    }
+
+    .payment-card .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #6b7280;
+    }
+
+    .payment-method input:checked + .payment-card .icon {
+        color: #2563eb;
+    }
+
+    .order-summary {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+
+    .summary-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .cart-items {
+        max-height: 400px;
+        overflow-y: auto;
+        margin-bottom: 1.5rem;
+    }
+
+    .cart-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item:first-child {
+            padding-top: 0;
+        }
+
+    .item-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid #e5e7eb;
+    }
+
+    .item-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .item-name {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+    }
+
+    .item-info {
+        font-size: 0.875rem;
+        color: #6b7280;
+        line-height: 1.4;
+    }
+
+    .item-price {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 1rem;
+        text-align: right;
+    }
+
+    .summary-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+        .summary-line:last-child {
+            border-bottom: none;
+        }
+
+        .summary-line.total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            border-top: 2px solid #d1d5db;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-bottom: none;
+        }
+
+    .checkout-actions {
+        margin-top: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .btn-checkout {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.125rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+        .btn-checkout:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-checkout:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .btn-back {
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        background: #f3f4f6;
+        color: #6b7280;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+        .btn-back:hover {
+            background: #6b7280;
+            color: white;
+            text-decoration: none;
+        }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #dc2626;
+    }
+
+    .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #059669;
+    }
+
+    .cart-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6b7280;
+    }
+
+        .cart-empty i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #d1d5db;
+        }
+
+        .cart-empty h4 {
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+    .loading-spinner {
+        text-align: center;
+        padding: 2rem;
+        color: #6b7280;
+    }
+
+        .loading-spinner i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+    @@keyframes spin {
+        from
+
+    {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    @@media (max-width: 968px) {
+        .checkout-content
+
+    {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .order-summary {
+        position: static;
+        order: -1;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-container {
+        padding: 1rem;
+    }
+
+    }
+</style>
+
+<div class="checkout-container">
+    <!-- Header -->
+    <div class="checkout-header">
+        <h1><i class="fas fa-shopping-cart"></i> Checkout</h1>
+        <p>Complete your order safely and securely</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="checkout-progress">
+        <div class="progress-step">
+            <div class="step-number">1</div>
+            <span>Cart</span>
+        </div>
+        <i class="fas fa-arrow-right"></i>
+        <div class="progress-step active">
+            <div class="step-number">2</div>
+            <span>Checkout</span>
+        </div>
+        <i class="fas fa-arrow-right"></i>
+        <div class="progress-step">
+            <div class="step-number">3</div>
+            <span>Confirmation</span>
+        </div>
+    </div>
+
+    <!-- Error/Success Messages -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="checkout-content">
+        <!-- Checkout Form -->
+        <div class="checkout-form">
+            <form asp-action="ProcessCheckout" method="post" id="checkoutForm">
+                @Html.AntiForgeryToken()
+
+                <!-- Billing Information -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-building"></i>
+                        Billing Information
+                    </h3>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="BillingInfo.CompanyName">Company Name *</label>
+                            <input class="form-input" asp-for="BillingInfo.CompanyName" placeholder="Your Company Name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="BillingInfo.ContactName">Contact Name *</label>
+                            <input class="form-input" asp-for="BillingInfo.ContactName" placeholder="Contact Person" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="BillingInfo.Email">Email *</label>
+                            <input class="form-input" asp-for="BillingInfo.Email" type="email" placeholder="contact@company.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="BillingInfo.Phone">Phone *</label>
+                            <input class="form-input" asp-for="BillingInfo.Phone" type="tel" placeholder="+90 555 123 4567" required>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label class="form-label" asp-for="BillingInfo.TaxId">Tax ID</label>
+                            <input class="form-input" asp-for="BillingInfo.TaxId" placeholder="Tax Identification Number">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Information -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-truck"></i>
+                        Shipping Information
+                    </h3>
+
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label class="form-label" asp-for="ShippingInfo.Address">Address *</label>
+                            <input class="form-input" asp-for="ShippingInfo.Address" placeholder="Full shipping address" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="ShippingInfo.City">City *</label>
+                            <input class="form-input" asp-for="ShippingInfo.City" placeholder="City" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="ShippingInfo.Country">Country *</label>
+                            <input class="form-input" asp-for="ShippingInfo.Country" placeholder="Country" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="ShippingInfo.PostalCode">Postal Code</label>
+                            <input class="form-input" asp-for="ShippingInfo.PostalCode" placeholder="Postal Code">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="ShippingInfo.Phone">Phone</label>
+                            <input class="form-input" asp-for="ShippingInfo.Phone" type="tel" placeholder="Phone for delivery">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-credit-card"></i>
+                        Payment Method
+                    </h3>
+
+                    <div class="payment-methods">
+                        <label class="payment-method">
+                            <input type="radio" name="PaymentMethod" value="Cash" checked>
+                            <div class="payment-card">
+                                <i class="fas fa-money-bill icon"></i>
+                                <span>Cash</span>
+                            </div>
+                        </label>
+
+                        <label class="payment-method">
+                            <input type="radio" name="PaymentMethod" value="Bank Transfer">
+                            <div class="payment-card">
+                                <i class="fas fa-university icon"></i>
+                                <span>Bank Transfer</span>
+                            </div>
+                        </label>
+
+                        <label class="payment-method">
+                            <input type="radio" name="PaymentMethod" value="Credit Card">
+                            <div class="payment-card">
+                                <i class="fas fa-credit-card icon"></i>
+                                <span>Credit Card</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-sticky-note"></i>
+                        Order Notes
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="form-label" asp-for="Notes">Special Instructions</label>
+                        <textarea class="form-input form-textarea" asp-for="Notes" placeholder="Any special delivery instructions or notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="checkout-actions">
+                    <button type="submit" class="btn-checkout" id="placeOrderBtn">
+                        <i class="fas fa-lock"></i>
+                        Place Order
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="order-summary">
+            <h3 class="summary-title">Order Summary</h3>
+
+            <div class="cart-items" id="checkoutCartItems">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading cart items...</p>
+                </div>
+            </div>
+
+            <div id="checkoutSummary">
+                <div class="summary-line">
+                    <span>Subtotal:</span>
+                    <span id="cartSubtotal">€0.00</span>
+                </div>
+                <div class="summary-line">
+                    <span>Shipping:</span>
+                    <span id="cartShipping">€0.00</span>
+                </div>
+                <div class="summary-line">
+                    <span>Tax (18%):</span>
+                    <span id="cartTax">€0.00</span>
+                </div>
+                <div class="summary-line total">
+                    <span>Total:</span>
+                    <span id="cartTotal">€0.00</span>
+                </div>
+            </div>
+
+            <a href="@Url.Action("Index")" class="btn-back" style="margin-top: 1rem;">
+                <i class="fas fa-arrow-left"></i>
+                Back to Shopping
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Checkout specific cart management - Layout'tan bağımsız
+        const CheckoutCart = {
+            cartItems: [],
+            subtotal: 0,
+            shipping: 0,
+            tax: 0,
+            total: 0,
+
+            init: function() {
+                console.log('Initializing checkout cart...');
+                this.loadCartData();
+                this.displayCart();
+                this.validateCart();
+                this.setupFormHandlers();
+            },
+
+            loadCartData: function() {
+                try {
+                    // Backend'den cart yüklemeye çalış
+                    this.loadFromBackend().then(backendCart => {
+                        if (backendCart && backendCart.length > 0) {
+                            this.cartItems = backendCart;
+                            console.log('Loaded cart from backend:', this.cartItems.length, 'items');
+                            this.displayCart();
+                            return;
+                        }
+
+                        // Fallback: localStorage'dan yükle
+                        const localCart = this.loadFromLocalStorage();
+                        if (localCart && localCart.length > 0) {
+                            this.cartItems = localCart;
+                            console.log('Loaded cart from localStorage:', this.cartItems.length, 'items');
+                        } else {
+                            this.cartItems = [];
+                            console.log('No cart items found');
+                        }
+                        this.displayCart();
+                    }).catch(error => {
+                        console.error('Error loading from backend:', error);
+                        // Fallback: localStorage'dan yükle
+                        const localCart = this.loadFromLocalStorage();
+                        this.cartItems = localCart || [];
+                        this.displayCart();
+                    });
+                } catch (error) {
+                    console.error('Error loading cart data:', error);
+                    this.cartItems = [];
+                    this.displayCart();
+                }
+            },
+
+            loadFromBackend: async function() {
+                try {
+                    const response = await fetch('/Customer/GetCartForCheckout', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success && result.data && result.data.items) {
+                        return result.data.items.map(item => ({
+                            id: item.id,
+                            productCode: item.productCode,
+                            color: item.color,
+                            size: item.size || 42,
+                            quantity: item.quantity,
+                            unitPrice: item.unitPrice,
+                            totalPrice: item.totalPrice,
+                            pricePerBox: item.unitPrice,
+                            isAssorted: item.isAssorted,
+                            totalPiecesOrdered: item.quantity * (item.totalPieces || 1),
+                            outerMaterial: item.outerMaterial || 'N/A',
+                            innerMaterial: item.innerMaterial || 'N/A',
+                            sole: item.sole || 'N/A'
+                        }));
+                    }
+
+                    return null;
+                } catch (error) {
+                    console.error('Error loading from backend:', error);
+                    return null;
+                }
+            },
+
+            loadFromLocalStorage: function() {
+                try {
+                    const cartData = window.wholesaleCart;
+                    if (cartData) {
+                        return JSON.parse(cartData);
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Error loading from localStorage:', error);
+                    return null;
+                }
+            },
+
+            displayCart: function() {
+                const cartContainer = document.getElementById('checkoutCartItems');
+
+                if (!this.cartItems || this.cartItems.length === 0) {
+                    cartContainer.innerHTML = `
+                        <div class="cart-empty">
+                            <i class="fas fa-shopping-cart"></i>
+                            <h4>Your cart is empty</h4>
+                            <p>Add some products to continue with checkout</p>
+                        </div>
+                    `;
+                    this.updateSummary(0, 0, 0, 0);
+                    return;
+                }
+
+                // Display cart items
+                cartContainer.innerHTML = this.cartItems.map(item => `
+                    <div class="cart-item">
+                        <div class="item-image">
+                            <i class="fas fa-shoe-prints" style="color: #6b7280;"></i>
+                        </div>
+                        <div class="item-details">
+                            <div class="item-name">${item.productCode} - ${item.color}</div>
+                            <div class="item-info">
+                                ${item.quantity} boxes × €${(item.pricePerBox || item.unitPrice || 0).toFixed(2)}
+                                ${item.isAssorted ? `<br><small>${item.totalPiecesOrdered || item.quantity} pieces total</small>` : ''}
+                                <br><small>Size: ${item.size || 'Mixed'}</small>
+                            </div>
+                        </div>
+                        <div class="item-price">€${(item.totalPrice || 0).toFixed(2)}</div>
+                    </div>
+                `).join('');
+
+                // Calculate and update summary
+                this.calculateTotals();
+            },
+
+            calculateTotals: function() {
+                this.subtotal = this.cartItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+                this.shipping = this.calculateShipping(this.subtotal);
+                this.tax = this.calculateTax(this.subtotal);
+                this.total = this.subtotal + this.shipping + this.tax;
+
+                this.updateSummary(this.subtotal, this.shipping, this.tax, this.total);
+            },
+
+            calculateShipping: function(subtotal) {
+                if (subtotal > 200) return 0; // Free shipping over €200
+                if (subtotal > 100) return 10;
+                return 15;
+            },
+
+            calculateTax: function(subtotal) {
+                return subtotal * 0.18; // 18% VAT
+            },
+
+            updateSummary: function(subtotal, shipping, tax, total) {
+                const elements = {
+                    subtotal: document.getElementById('cartSubtotal'),
+                    shipping: document.getElementById('cartShipping'),
+                    tax: document.getElementById('cartTax'),
+                    total: document.getElementById('cartTotal')
+                };
+
+                if (elements.subtotal) elements.subtotal.textContent = `€${subtotal.toFixed(2)}`;
+                if (elements.shipping) elements.shipping.textContent = `€${shipping.toFixed(2)}`;
+                if (elements.tax) elements.tax.textContent = `€${tax.toFixed(2)}`;
+                if (elements.total) elements.total.textContent = `€${total.toFixed(2)}`;
+            },
+
+            validateCart: function() {
+                const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+                if (!this.cartItems || this.cartItems.length === 0) {
+                    if (placeOrderBtn) {
+                        placeOrderBtn.disabled = true;
+                        placeOrderBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Cart is Empty';
+                    }
+                } else {
+                    if (placeOrderBtn) {
+                        placeOrderBtn.disabled = false;
+                        placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Place Order';
+                    }
+                }
+            },
+
+            setupFormHandlers: function() {
+                const checkoutForm = document.getElementById('checkoutForm');
+                if (checkoutForm) {
+                    checkoutForm.addEventListener('submit', (e) => {
+                        if (!this.cartItems || this.cartItems.length === 0) {
+                            e.preventDefault();
+                            this.showToast('Please add items to your cart before placing an order.', 'error');
+                            return false;
+                        }
+
+                        // Show loading state
+                        const submitBtn = document.getElementById('placeOrderBtn');
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Order...';
+                        }
+                    });
+                }
+            },
+
+            showToast: function(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type === 'error' ? 'danger' : 'success'}`;
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 2rem;
+                    right: 2rem;
+                    z-index: 9999;
+                    max-width: 400px;
+                    animation: slideIn 0.3s ease;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                `;
+
+                toast.innerHTML = `
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'}"></i>
+                    ${message}
+                    <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 1rem;">&times;</button>
+                `;
+
+                document.body.appendChild(toast);
+
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 5000);
+            }
+        };
+
+        // Initialize checkout cart
+        CheckoutCart.init();
+
+        // Global cart functions - safely ignore layout calls
+        window.updateCartDisplay = function() {
+            // Safely ignore - checkout has its own display
+            console.log('Cart display update ignored on checkout page');
+        };
+
+        window.updateCartBadge = function() {
+            // Safely ignore - checkout doesn't need badge updates
+            console.log('Cart badge update ignored on checkout page');
+        };
+
+        // Prevent any shoeStore related errors
+        if (typeof window.shoeStore === 'undefined') {
+            window.shoeStore = {
+                cart: CheckoutCart.cartItems,
+                updateCartDisplay: function() {
+                    CheckoutCart.displayCart();
+                }
+            };
+        }
+    });
+
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+    @@keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+</script>

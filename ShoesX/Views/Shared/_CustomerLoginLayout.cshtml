@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Wholesale Shoe Store</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/customer-login.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="login-container">
+            <!-- Sidebar - Left Column -->
+            <div class="login-sidebar col-lg-5 d-none d-lg-flex">
+                <div class="text-center w-100">
+                    <div class="brand-logo">
+                        <i class="fas fa-shoe-prints"></i>
+                    </div>
+                    <h1>Wholesale Shoe Store</h1>
+                    <p class="lead">Your Trusted Partner for Bulk Shoe Purchases</p>
+
+                    <div class="feature-section">
+                        <div class="d-flex justify-content-center">
+                            <div class="feature-item">
+                                <i class="fas fa-box-open"></i>
+                                <p>Bulk Orders</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-tags"></i>
+                                <p>Wholesale Prices</p>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-truck"></i>
+                                <p>Fast Shipping</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <p>&copy; @DateTime.Now.Year - Wholesale Shoe Store</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content - Right Column -->
+            <div class="login-main col-lg-7 bg-white">
+                <div class="login-header">
+                    <div class="d-lg-none">
+                        <h4 class="m-0 text-primary">
+                            <i class="fas fa-shoe-prints"></i> Wholesale Shoe Store
+                        </h4>
+                    </div>
+                    <a href="/" class="home-link">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </div>
+
+                <div class="login-content">
+                    @RenderBody()
+                </div>
+
+                <div class="mt-auto text-center d-block d-lg-none">
+                    <p class="text-muted">&copy; @DateTime.Now.Year - Wholesale Shoe Store</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

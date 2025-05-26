@@ -1,0 +1,496 @@
+﻿@{
+    ViewData["Title"] = "Shoe Catalog";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Panel - Filters -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm" method="get">
+                        <!-- Product Code Search -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Product Code</label>
+                            <input type="text" class="form-control" name="productCode" placeholder="3000-1, 3000-2...">
+                        </div>
+
+                        <!-- Description Search -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description</label>
+                            <input type="text" class="form-control" name="description" placeholder="BLACK LEATHER, NUBUCK...">
+                        </div>
+
+                        <!-- Color Filter -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Color</label>
+                            <div class="filter-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="BLACK" id="black">
+                                    <label class="form-check-label" for="black">BLACK</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="BROWN" id="brown">
+                                    <label class="form-check-label" for="brown">BROWN</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="NAVY" id="navy">
+                                    <label class="form-check-label" for="navy">NAVY</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="GREY" id="grey">
+                                    <label class="form-check-label" for="grey">GREY</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="KHAKI" id="khaki">
+                                    <label class="form-check-label" for="khaki">KHAKI</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="TAN" id="tan">
+                                    <label class="form-check-label" for="tan">TAN</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="BLUE" id="blue">
+                                    <label class="form-check-label" for="blue">BLUE</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="SAND" id="sand">
+                                    <label class="form-check-label" for="sand">SAND</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="CHARCOAL" id="charcoal">
+                                    <label class="form-check-label" for="charcoal">CHARCOAL</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="ASPHALT" id="asphalt">
+                                    <label class="form-check-label" for="asphalt">ASPHALT</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="FUCHSIA" id="fuchsia">
+                                    <label class="form-check-label" for="fuchsia">FUCHSIA</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Material Filter -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Inner Material</label>
+                            <div class="filter-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="LEATHER" id="leather">
+                                    <label class="form-check-label" for="leather">LEATHER</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="NUBUCK" id="nubuck">
+                                    <label class="form-check-label" for="nubuck">NUBUCK</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="CRAZY" id="crazy">
+                                    <label class="form-check-label" for="crazy">CRAZY</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Size Filter -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Size</label>
+                            <div class="filter-group">
+                                <div class="row">
+                                    @for (int i = 40; i <= 45; i++)
+                                    {
+                                        <div class="col-4 mb-1">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="@i" id="size@i">
+                                                <label class="form-check-label" for="size@i">@i</label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Price Range (CFT)</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="minPrice" placeholder="Min" step="0.01">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" name="maxPrice" placeholder="Max" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stock Status -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Stock Status</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="inStock">
+                                <label class="form-check-label" for="inStock">In Stock</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="lowStock">
+                                <label class="form-check-label" for="lowStock">Low Stock (≤5)</label>
+                            </div>
+                        </div>
+
+                        <!-- Assorted -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="assorted">
+                                <label class="form-check-label" for="assorted">Assorted Products</label>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Shoes -->
+        <div class="col-md-9">
+            <!-- Top Bar -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4>Shoe Catalog</h4>
+                    <span class="text-muted">Total 36 products found</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <label class="me-2">Sort by:</label>
+                    <select class="form-select form-select-sm" style="width: 180px;">
+                        <option>Product Code</option>
+                        <option>Price (Low-High)</option>
+                        <option>Price (High-Low)</option>
+                        <option>Stock Quantity</option>
+                        <option>Alphabetical</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Shoe Grid -->
+            <div class="row" id="shoesGrid">
+                <!-- 3000-1 Black Leather -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card shoe-card h-100 shadow-sm">
+                        <div class="position-relative">
+                            <img src="https://via.placeholder.com/300x200/2c3e50/ffffff?text=3000-1"
+                                 class="card-img-top" alt="3000-1" style="height: 200px; object-fit: cover;">
+                            <span class="badge bg-success position-absolute top-0 end-0 m-2">In Stock</span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <small class="text-muted fw-bold">Code: 3000-1</small>
+                                <span class="badge bg-warning">40.00 CFT</span>
+                            </div>
+                            <h6 class="card-title">BLACK LEATHER POLY SOLE COMFORT ROLLER</h6>
+
+                            <!-- Features -->
+                            <div class="mb-2">
+                                <span class="badge bg-dark me-1">BLACK</span>
+                                <span class="badge bg-light text-dark me-1">LEATHER</span>
+                                <span class="badge bg-info text-dark">POLY SOLE</span>
+                            </div>
+
+                            <!-- Technical Info -->
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Weight: 9.5 KG</small>
+                                <small class="text-muted d-block">Unit: CFT</small>
+                                <small class="text-muted d-block">Box: 42 pcs</small>
+                            </div>
+
+                            <!-- Stock Info -->
+                            <div class="mb-2">
+                                <small class="text-muted d-block mb-1">Actual Stock:</small>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 80%"></div>
+                                </div>
+                                <small class="text-success">Stock available</small>
+                            </div>
+
+                            <!-- Price and Buttons -->
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="text-primary mb-0">40.00 CFT</h5>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-primary btn-sm me-1"
+                                                onclick="viewDetails('3000-1')" title="Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-primary btn-sm"
+                                                onclick="addToCart('3000-1')" title="Add to Cart">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3000-2 Asphalt Nubuck -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card shoe-card h-100 shadow-sm">
+                        <div class="position-relative">
+                            <img src="https://via.placeholder.com/300x200/34495e/ffffff?text=3000-2"
+                                 class="card-img-top" alt="3000-2" style="height: 200px; object-fit: cover;">
+                            <span class="badge bg-warning position-absolute top-0 end-0 m-2">Low Stock</span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <small class="text-muted fw-bold">Code: 3000-2</small>
+                                <span class="badge bg-warning">20.00 CFT</span>
+                            </div>
+                            <h6 class="card-title">ASPHALT NUBUCK POLY SOLE COMFORT ROLLER</h6>
+
+                            <div class="mb-2">
+                                <span class="badge bg-secondary me-1">ASPHALT</span>
+                                <span class="badge bg-light text-dark me-1">NUBUCK</span>
+                                <span class="badge bg-info text-dark">POLY SOLE</span>
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Weight: 9.5 KG</small>
+                                <small class="text-muted d-block">Unit: CFT</small>
+                                <small class="text-muted d-block">Box: 42 pcs</small>
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block mb-1">Actual Stock:</small>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 25%"></div>
+                                </div>
+                                <small class="text-warning">Low stock</small>
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="text-primary mb-0">20.00 CFT</h5>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-primary btn-sm me-1"
+                                                onclick="viewDetails('3000-2')" title="Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-primary btn-sm"
+                                                onclick="addToCart('3000-2')" title="Add to Cart">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3000-2 Fuchsia Nubuck -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card shoe-card h-100 shadow-sm">
+                        <div class="position-relative">
+                            <img src="https://via.placeholder.com/300x200/e91e63/ffffff?text=3000-2"
+                                 class="card-img-top" alt="3000-2 Fuchsia" style="height: 200px; object-fit: cover;">
+                            <span class="badge bg-success position-absolute top-0 end-0 m-2">In Stock</span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <small class="text-muted fw-bold">Code: 3000-2</small>
+                                <span class="badge bg-warning">70.00 CFT</span>
+                            </div>
+                            <h6 class="card-title">FUCHSIA NUBUCK POLY SOLE COMFORT ROLLER</h6>
+
+                            <div class="mb-2">
+                                <span class="badge me-1" style="background-color: #e91e63; color: white;">FUCHSIA</span>
+                                <span class="badge bg-light text-dark me-1">NUBUCK</span>
+                                <span class="badge bg-info text-dark">POLY SOLE</span>
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Weight: 9.5 KG</small>
+                                <small class="text-muted d-block">Unit: CFT</small>
+                                <small class="text-muted d-block">Box: 42 pcs</small>
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block mb-1">Actual Stock:</small>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 70%"></div>
+                                </div>
+                                <small class="text-success">Stock available</small>
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="text-primary mb-0">70.00 CFT</h5>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-primary btn-sm me-1"
+                                                onclick="viewDetails('3000-2-fuchsia')" title="Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-primary btn-sm"
+                                                onclick="addToCart('3000-2-fuchsia')" title="Add to Cart">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3000-2 Grey Nubuck -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card shoe-card h-100 shadow-sm">
+                        <div class="position-relative">
+                            <img src="https://via.placeholder.com/300x200/95a5a6/ffffff?text=3000-2"
+                                 class="card-img-top" alt="3000-2 Grey" style="height: 200px; object-fit: cover;">
+                            <span class="badge bg-success position-absolute top-0 end-0 m-2">High Stock</span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <small class="text-muted fw-bold">Code: 3000-2</small>
+                                <span class="badge bg-success">290.00 CFT</span>
+                            </div>
+                            <h6 class="card-title">GREY NUBUCK POLY SOLE COMFORT ROLLER</h6>
+
+                            <div class="mb-2">
+                                <span class="badge bg-secondary me-1">GREY</span>
+                                <span class="badge bg-light text-dark me-1">NUBUCK</span>
+                                <span class="badge bg-info text-dark">POLY SOLE</span>
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Weight: 9.5 KG</small>
+                                <small class="text-muted d-block">Unit: CFT</small>
+                                <small class="text-muted d-block">Box: 42 pcs</small>
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted d-block mb-1">Actual Stock:</small>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 95%"></div>
+                                </div>
+                                <small class="text-success">High stock</small>
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="text-primary mb-0">290.00 CFT</h5>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-primary btn-sm me-1"
+                                                onclick="viewDetails('3000-2-grey')" title="Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-primary btn-sm"
+                                                onclick="addToCart('3000-2-grey')" title="Add to Cart">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- More product cards can be added... -->
+
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#"><i class="fas fa-angle-right"></i></a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function clearFilters() {
+            document.querySelectorAll('#filterForm input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#filterForm input[type="text"], #filterForm input[type="number"]').forEach(inp => inp.value = '');
+            document.querySelectorAll('#filterForm select').forEach(sel => sel.selectedIndex = 0);
+        }
+
+        function addToCart(productCode) {
+            alert('Adding to cart: ' + productCode);
+            // TODO: AJAX add to cart functionality
+        }
+
+        function viewDetails(productCode) {
+            alert('View details: ' + productCode);
+            // TODO: Redirect to details page
+        }
+    </script>
+}
+
+<style>
+    .filter-group {
+        max-height: 180px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 10px;
+        background-color: #f8f9fa;
+    }
+
+    .form-check {
+        margin-bottom: 0.3rem;
+    }
+
+    .shoe-card {
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+        .shoe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+        }
+
+    .progress {
+        background-color: #e9ecef;
+    }
+
+    .card-header {
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+    }
+</style>

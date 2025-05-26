@@ -1,0 +1,257 @@
+﻿@{
+    ViewData["Title"] = "Product Details";
+}
+
+<div class="product-details-page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb-nav">
+        <div class="breadcrumb-container">
+            <a href="/Customer/Index" class="breadcrumb-link">
+                <i class="fas fa-home"></i>
+                Products
+            </a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current" id="breadcrumbProduct">Loading...</span>
+        </div>
+    </nav>
+
+    <!-- Product Details Content -->
+    <div class="product-details-container">
+        <!-- Loading State -->
+        <div id="detailsLoading" class="details-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading product details...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="detailsError" class="details-error" style="display: none;">
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Product Not Found</h3>
+                <p>The product you're looking for doesn't exist or has been removed.</p>
+                <a href="/Customer/Index" class="btn-back-to-products">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Products
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Product Details -->
+        <div id="productDetailsContent" class="product-details-content" style="display: none;">
+            <div class="product-details-grid">
+                <!-- Left Column - Images -->
+                <div class="product-images-section">
+                    <div class="main-product-image">
+                        <img id="mainProductImage"
+                             src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&h=600&fit=crop&crop=center"
+                             alt="Product Image" class="main-image">
+                        <div class="image-badges" id="imageBadges">
+                            <!-- Badges will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="product-image-gallery">
+                        <div class="gallery-thumbnails" id="galleryThumbnails">
+                            <!-- Thumbnails will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Product Info -->
+                <div class="product-info-section">
+                    <!-- Product Header -->
+                    <div class="product-header-details">
+                        <div class="product-code-details" id="productCodeDetails">
+                            Loading...
+                        </div>
+                        <h1 class="product-title-details" id="productTitleDetails">
+                            Loading Product...
+                        </h1>
+                        <div class="product-subtitle" id="productSubtitle">
+                            <!-- Product category info -->
+                        </div>
+                    </div>
+
+                    <!-- Price Section -->
+                    <div class="price-section-details" id="priceSectionDetails">
+                        <!-- Price will be inserted here -->
+                    </div>
+
+                    <!-- Assorted Information -->
+                    <div id="assortedSection" class="assorted-section" style="display: none;">
+                        <div class="assorted-info-card">
+                            <div class="assorted-header">
+                                <i class="fas fa-boxes"></i>
+                                <h3>Assorted Product Information</h3>
+                            </div>
+                            <div class="assorted-details">
+                                <p>This is an assorted product containing mixed sizes in each box.</p>
+                                <div class="assorted-sizes-section">
+                                    <h4>Available Sizes in Each Box:</h4>
+                                    <div class="assorted-sizes-list" id="assortedSizesList">
+                                        <!-- Sizes will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Selection -->
+                    <div class="color-selection-section">
+                        <h3>Available Colors</h3>
+                        <div class="colors-grid" id="colorsGrid">
+                            <!-- Colors will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Quantity Selection -->
+                    <div class="quantity-section">
+                        <h3>Select Quantity</h3>
+                        <div class="quantity-controls-details">
+                            <label for="quantityInput">Number of Boxes:</label>
+                            <div class="quantity-input-container">
+                                <button class="qty-btn-details" onclick="decreaseQuantity()">-</button>
+                                <input type="number" id="quantityInput" value="1" min="1" class="quantity-input-details">
+                                <button class="qty-btn-details" onclick="increaseQuantity()">+</button>
+                            </div>
+                            <div class="quantity-info" id="quantityInfo">
+                                <!-- Quantity calculations will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add to Cart Section -->
+                    <div class="add-to-cart-section">
+                        <button id="addToCartBtn" class="btn-add-to-cart-details" onclick="addSelectedToCart()">
+                            <i class="fas fa-shopping-cart"></i>
+                            Add to Cart
+                        </button>
+                        <div class="cart-info-preview" id="cartInfoPreview">
+                            <!-- Cart preview info -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Features & Specifications -->
+            <div class="product-features-section">
+                <div class="features-grid">
+                    <!-- Features Column -->
+                    <div class="features-column">
+                        <h3>Product Features</h3>
+                        <div class="features-list-container" id="featuresContainer">
+                            <!-- Features will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Specifications Column -->
+                    <div class="specifications-column">
+                        <h3>Specifications</h3>
+                        <div class="specifications-table" id="specificationsTable">
+                            <!-- Specifications will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Stock Information Column -->
+                    <div class="stock-column">
+                        <h3>Stock Information</h3>
+                        <div class="stock-info-details" id="stockInfoDetails">
+                            <!-- Stock info will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Products -->
+            <div class="related-products-section">
+                <h3>Related Products</h3>
+                <div class="related-products-grid" id="relatedProductsGrid">
+                    <!-- Related products will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS and JS -->
+<link href="~/css/product-details.css" rel="stylesheet" />
+<script src="~/js/product-details.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get product code from URL
+        const pathParts = window.location.pathname.split('/');
+        const productCode = pathParts[pathParts.length - 1];
+
+        if (productCode && typeof ProductDetailsManager !== 'undefined') {
+            const detailsManager = new ProductDetailsManager();
+            detailsManager.init(productCode);
+        } else {
+            console.error('Product code not found or ProductDetailsManager not loaded');
+            showError();
+        }
+    });
+
+    function showError() {
+        document.getElementById('detailsLoading').style.display = 'none';
+        document.getElementById('detailsError').style.display = 'block';
+    }
+
+    // Global functions for quantity controls
+    function increaseQuantity() {
+        const input = document.getElementById('quantityInput');
+        const currentValue = parseInt(input.value);
+        const maxValue = parseInt(input.max) || 999;
+
+        if (currentValue < maxValue) {
+            input.value = currentValue + 1;
+            updateQuantityInfo();
+        }
+    }
+
+    function decreaseQuantity() {
+        const input = document.getElementById('quantityInput');
+        const currentValue = parseInt(input.value);
+        const minValue = parseInt(input.min) || 1;
+
+        if (currentValue > minValue) {
+            input.value = currentValue - 1;
+            updateQuantityInfo();
+        }
+    }
+
+    function updateQuantityInfo() {
+        if (typeof window.productDetailsManager !== 'undefined') {
+            window.productDetailsManager.updateQuantityDisplay();
+        }
+    }
+
+    function addSelectedToCart() {
+        if (typeof window.productDetailsManager !== 'undefined') {
+            window.productDetailsManager.addToCart();
+        }
+    }
+
+    function selectColor(color) {
+        if (typeof window.productDetailsManager !== 'undefined') {
+            window.productDetailsManager.selectColor(color);
+        }
+    }
+
+    function changeMainImage(imageSrc) {
+        const mainImage = document.getElementById('mainProductImage');
+        if (mainImage) {
+            mainImage.src = imageSrc;
+        }
+
+        // Update active thumbnail
+        document.querySelectorAll('.gallery-thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+
+        const clickedThumb = document.querySelector(`[onclick="changeMainImage('${imageSrc}')"]`);
+        if (clickedThumb) {
+            clickedThumb.classList.add('active');
+        }
+    }
+</script>
