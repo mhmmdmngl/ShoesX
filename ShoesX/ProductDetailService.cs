@@ -1,4 +1,4 @@
-﻿// ===== CART & PRODUCT DETAIL BACKEND SERVICES =====
+﻿// ===== CART & PRODUCT DETAIL BACKEND SERVICES - ORIJINAL + TOTAL PIECES FIX =====
 
 using System;
 using System.Collections.Generic;
@@ -123,6 +123,10 @@ namespace WholesaleShoeStore.Services
                         FinalPrice = productInfo.FinalPrice,
                         IsAssorted = productInfo.IsAssorted,
                         BoxQuantity = productInfo.BoxQuantity,
+
+                        // ✅ YENİ EKLENEN: TotalPieces field
+                        TotalPieces = productInfo.TotalPieces,
+
                         Weight = productInfo.Weight,
                         Unit = productInfo.Unit,
                         ExpiresAt = DateTime.UtcNow.AddHours(24),
@@ -152,6 +156,7 @@ namespace WholesaleShoeStore.Services
                 return ApiResponse<CartItemDto>.ErrorResponse($"Error adding item to cart: {ex.Message}");
             }
         }
+
         public async Task<ApiResponse<CartSummaryDto>> GetCartAsync(int? customerId, string? sessionId)
         {
             try
@@ -162,6 +167,10 @@ namespace WholesaleShoeStore.Services
                 {
                     TotalItems = cartItems.Count,
                     TotalQuantity = cartItems.Sum(c => c.Quantity),
+
+                    // ✅ YENİ EKLENEN: TotalPieces calculation
+                    TotalPieces = cartItems.Sum(c => c.Quantity * c.TotalPieces),
+
                     SubTotal = cartItems.Sum(c => c.Price * c.Quantity),
                     DiscountAmount = cartItems.Sum(c => (c.Price - c.FinalPrice) * c.Quantity),
                     TotalAmount = cartItems.Sum(c => c.FinalPrice * c.Quantity),
@@ -485,6 +494,7 @@ namespace WholesaleShoeStore.Services
                 return new List<dynamic>();
             }
         }
+
         private async Task<ProductInfo?> GetProductInfoAsync(string productCode, string color)
         {
             try
@@ -529,6 +539,10 @@ namespace WholesaleShoeStore.Services
                                 FinalPrice = GetFinalPriceFromElement(element),
                                 IsAssorted = GetBooleanFromElement(element, "isAssorted"),
                                 BoxQuantity = GetIntFromElement(element, "boxQuantity", 1),
+
+                                // ✅ YENİ EKLENEN: TotalPieces hesaplama
+                                TotalPieces = CalculateTotalPieces(element),
+
                                 Weight = GetDecimalFromElement(element, "weight"),
                                 Unit = GetStringFromElement(element, "unit", "PCS"),
                                 OuterMaterial = GetStringFromElement(element, "outerMaterial"),
@@ -558,6 +572,56 @@ namespace WholesaleShoeStore.Services
                 return null;
             }
         }
+
+        // ✅ YENİ EKLENEN: TotalPieces hesaplama metodu
+        private int CalculateTotalPieces(JsonElement element)
+        {
+            try
+            {
+                // Önce JSON'dan totalPieces değerini almaya çalış
+                int totalPieces = GetIntFromElement(element, "totalPieces", 0);
+
+                if (totalPieces > 0)
+                {
+                    _logger.LogDebug($"Using totalPieces from JSON: {totalPieces}");
+                    return totalPieces;
+                }
+
+                // totalPieces yoksa veya 0 ise, sizes objesinden hesapla
+                if (element.TryGetProperty("sizes", out var sizesElement) && sizesElement.ValueKind == JsonValueKind.Object)
+                {
+                    int sizesTotal = 0;
+                    foreach (var sizeProperty in sizesElement.EnumerateObject())
+                    {
+                        if (sizeProperty.Value.ValueKind == JsonValueKind.Number)
+                        {
+                            sizesTotal += sizeProperty.Value.GetInt32();
+                        }
+                        else if (sizeProperty.Value.ValueKind == JsonValueKind.String &&
+                                int.TryParse(sizeProperty.Value.GetString(), out int sizeValue))
+                        {
+                            sizesTotal += sizeValue;
+                        }
+                    }
+
+                    if (sizesTotal > 0)
+                    {
+                        _logger.LogDebug($"Calculated totalPieces from sizes: {sizesTotal}");
+                        return sizesTotal;
+                    }
+                }
+
+                // Her ikisi de yoksa default 1
+                _logger.LogDebug("No totalPieces or sizes found, using default: 1");
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Error calculating totalPieces: {ex.Message}");
+                return 1;
+            }
+        }
+
         // Helper methods for safe JSON parsing
         private string GetStringFromElement(JsonElement element, string propertyName, string defaultValue = "")
         {
@@ -664,6 +728,7 @@ namespace WholesaleShoeStore.Services
                 return 0;
             }
         }
+
         // Helper methods for safe JSON property access
         private string? GetStringSafe(JsonElement element, string propertyName)
         {
@@ -756,6 +821,7 @@ namespace WholesaleShoeStore.Services
             // Fallback to original price
             return originalPrice;
         }
+
         private async Task<List<Cart>> GetCartItemsAsync(int? customerId, string? sessionId)
         {
             var whereClause = "";
@@ -836,6 +902,15 @@ namespace WholesaleShoeStore.Services
                 DiscountAmount = (cartItem.Price - cartItem.FinalPrice) * cartItem.Quantity, // Calculate manually
                 IsAssorted = cartItem.IsAssorted,
                 BoxQuantity = cartItem.BoxQuantity,
+
+                // ✅ YENİ EKLENEN: TotalPieces fields
+                TotalPieces = cartItem.TotalPieces,
+                TotalPiecesOrdered = cartItem.Quantity * cartItem.TotalPieces,
+                PricePerPiece = cartItem.IsAssorted && cartItem.TotalPieces > 0 ?
+                    cartItem.FinalPrice / cartItem.TotalPieces : cartItem.FinalPrice,
+                PricePerBox = cartItem.IsAssorted ?
+                    cartItem.FinalPrice * cartItem.TotalPieces : cartItem.FinalPrice,
+
                 Weight = cartItem.Weight,
                 TotalWeight = cartItem.Weight * cartItem.Quantity, // Calculate manually
                 Unit = cartItem.Unit,
@@ -851,6 +926,7 @@ namespace WholesaleShoeStore.Services
                 ImageUrl = "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=300"
             };
         }
+
         private async Task UpdateCartSummaryAsync(int? customerId, string? sessionId)
         {
             // This would typically update the CartSummary table
@@ -988,6 +1064,10 @@ namespace WholesaleShoeStore.Services
                 foreach (var variant in variants)
                 {
                     var variantElement = (JsonElement)variant;
+
+                    // ✅ YENİ EKLENEN: TotalPieces hesaplama
+                    var totalPieces = CalculateTotalPiecesForProductDetail(variantElement);
+
                     var variantDto = new ProductVariantDto
                     {
                         Color = variantElement.GetProperty("color").GetString() ?? "",
@@ -997,6 +1077,10 @@ namespace WholesaleShoeStore.Services
                                     variantElement.TryGetProperty("price", out var priceEl2) ? priceEl2.GetDecimal() : 0,
                         ActualStock = variantElement.TryGetProperty("actualStock", out var stockEl) ? stockEl.GetDecimal() : 0,
                         BoxQuantity = variantElement.TryGetProperty("boxQuantity", out var boxQtyEl) ? boxQtyEl.GetInt32() : 1,
+
+                        // ✅ YENİ EKLENEN: TotalPieces field
+                        TotalPieces = totalPieces,
+
                         Weight = variantElement.TryGetProperty("weight", out var weightEl) ? weightEl.GetDecimal() : 0,
                         Unit = variantElement.TryGetProperty("unit", out var unitEl) ? unitEl.GetString() ?? "PCS" : "PCS",
                         SizeStocks = new Dictionary<int, int>()
@@ -1190,6 +1274,10 @@ namespace WholesaleShoeStore.Services
                 var variantDtos = variants.Select(v =>
                 {
                     var element = (JsonElement)v;
+
+                    // ✅ YENİ EKLENEN: TotalPieces hesaplama
+                    var totalPieces = CalculateTotalPiecesForProductDetail(element);
+
                     var variantDto = new ProductVariantDto
                     {
                         Color = element.GetProperty("color").GetString() ?? "",
@@ -1199,6 +1287,10 @@ namespace WholesaleShoeStore.Services
                                     element.TryGetProperty("price", out var priceEl2) ? priceEl2.GetDecimal() : 0,
                         ActualStock = element.TryGetProperty("actualStock", out var stockEl) ? stockEl.GetDecimal() : 0,
                         BoxQuantity = element.TryGetProperty("boxQuantity", out var boxQtyEl) ? boxQtyEl.GetInt32() : 1,
+
+                        // ✅ YENİ EKLENEN: TotalPieces field
+                        TotalPieces = totalPieces,
+
                         Weight = element.TryGetProperty("weight", out var weightEl) ? weightEl.GetDecimal() : 0,
                         Unit = element.TryGetProperty("unit", out var unitEl) ? unitEl.GetString() ?? "PCS" : "PCS",
                         SizeStocks = new Dictionary<int, int>()
@@ -1230,7 +1322,6 @@ namespace WholesaleShoeStore.Services
 
         #region Private Methods
 
-        // Also update the ProductDetailService methods with the same safe JSON handling
         private async Task<List<dynamic>> LoadProductsAsync()
         {
             try
@@ -1254,6 +1345,49 @@ namespace WholesaleShoeStore.Services
                 return new List<dynamic>();
             }
         }
+
+        // ✅ YENİ EKLENEN: ProductDetailService için TotalPieces hesaplama
+        private int CalculateTotalPiecesForProductDetail(JsonElement element)
+        {
+            try
+            {
+                // Önce JSON'dan totalPieces değerini almaya çalış
+                if (element.TryGetProperty("totalPieces", out var totalPiecesEl) && totalPiecesEl.ValueKind == JsonValueKind.Number)
+                {
+                    var totalPieces = totalPiecesEl.GetInt32();
+                    if (totalPieces > 0) return totalPieces;
+                }
+
+                // totalPieces yoksa veya 0 ise, sizes objesinden hesapla
+                if (element.TryGetProperty("sizes", out var sizesElement) && sizesElement.ValueKind == JsonValueKind.Object)
+                {
+                    int sizesTotal = 0;
+                    foreach (var sizeProperty in sizesElement.EnumerateObject())
+                    {
+                        if (sizeProperty.Value.ValueKind == JsonValueKind.Number)
+                        {
+                            sizesTotal += sizeProperty.Value.GetInt32();
+                        }
+                        else if (sizeProperty.Value.ValueKind == JsonValueKind.String &&
+                                int.TryParse(sizeProperty.Value.GetString(), out int sizeValue))
+                        {
+                            sizesTotal += sizeValue;
+                        }
+                    }
+
+                    if (sizesTotal > 0) return sizesTotal;
+                }
+
+                // Her ikisi de yoksa default 1
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Error calculating totalPieces in ProductDetailService: {ex.Message}");
+                return 1;
+            }
+        }
+
         #endregion
     }
 
@@ -1269,6 +1403,10 @@ namespace WholesaleShoeStore.Services
         public decimal FinalPrice { get; set; }
         public bool IsAssorted { get; set; }
         public int BoxQuantity { get; set; }
+
+        // ✅ YENİ EKLENEN: TotalPieces field
+        public int TotalPieces { get; set; } = 1;
+
         public decimal Weight { get; set; }
         public string Unit { get; set; } = string.Empty;
         public string OuterMaterial { get; set; } = string.Empty;

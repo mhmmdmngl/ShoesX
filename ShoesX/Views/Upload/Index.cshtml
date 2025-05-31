@@ -1,0 +1,660 @@
+﻿@{
+    ViewData["Title"] = "Excel Upload & Product Management";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="fas fa-file-excel text-success me-3"></i>
+                    Excel Upload & Product Management
+                </h2>
+                <p class="page-subtitle">Upload Excel files to add or update shoe products in bulk</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="upload-card">
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>
+                            Upload Excel File
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-content">
+                                    <i class="fas fa-file-excel upload-icon"></i>
+                                    <h4>Drop your Excel file here</h4>
+                                    <p class="text-muted">or click to browse files</p>
+                                    <input type="file" id="fileInput" name="file" accept=".xlsx,.xls" class="file-input" />
+                                    <div class="upload-requirements">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Supported formats: .xlsx, .xls | Max size: 10MB
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="selected-file" id="selectedFile" style="display: none;">
+                                <div class="file-info">
+                                    <i class="fas fa-file-excel text-success me-2"></i>
+                                    <span id="fileName"></span>
+                                    <span id="fileSize" class="text-muted ms-2"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="removeFile">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-3 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg" id="processBtn" disabled>
+                                    <i class="fas fa-cog me-2"></i>
+                                    Process Excel File
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-lg" id="downloadTemplate">
+                                    <i class="fas fa-download me-2"></i>
+                                    Download Template
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="row mb-4" id="progressSection" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-body p-4">
+                    <h6 class="mb-3">Processing Progress</h6>
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar" style="width: 0%" id="progressBar">
+                            <span id="progressText">0%</span>
+                        </div>
+                    </div>
+                    <div id="progressStatus" class="text-muted">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        Initializing...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row mb-4" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Processing Results
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Summary Stats -->
+                    <div class="row mb-4" id="summaryStats">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card success">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 id="processedCount">0</h3>
+                                    <p>Processed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card warning">
+                                <div class="stat-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 id="errorCount">0</h3>
+                                    <p>Errors</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card info">
+                                <div class="stat-icon">
+                                    <i class="fas fa-images"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 id="imageCount">0</h3>
+                                    <p>Images</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card primary">
+                                <div class="stat-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 id="totalRows">0</h3>
+                                    <p>Total Rows</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Preview -->
+                    <div class="data-preview" id="dataPreview">
+                        <h6 class="mb-3">Data Preview</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="previewTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Product Code</th>
+                                        <th>Color</th>
+                                        <th>Material</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Errors List -->
+                    <div class="errors-section" id="errorsSection" style="display: none;">
+                        <h6 class="text-danger mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Processing Errors
+                        </h6>
+                        <div class="alert alert-danger">
+                            <ul id="errorsList" class="mb-0"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons mt-4">
+                        <button type="button" class="btn btn-success btn-lg me-3" id="saveToDbBtn" disabled>
+                            <i class="fas fa-save me-2"></i>
+                            Save to Database
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="exportJsonBtn" disabled>
+                            <i class="fas fa-file-export me-2"></i>
+                            Export as JSON
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="resetBtn">
+                            <i class="fas fa-redo me-2"></i>
+                            Upload New File
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Excel Format Requirements
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Required Columns:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>KART KODU (Product Code)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>RENK (Color)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>DIŞ MALZEME (Outer Material)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>İÇ MALZEME (Inner Material)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>TABAN (Sole Material)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Optional Columns:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-info text-info me-2"></i>FİYAT (Price)</li>
+                                <li><i class="fas fa-info text-info me-2"></i>KAMPANYALI (Campaign Price)</li>
+                                <li><i class="fas fa-info text-info me-2"></i>40, 41, 42, 43, 44 (Size Stock)</li>
+                                <li><i class="fas fa-info text-info me-2"></i>ASORTİ (Assorted)</li>
+                                <li><i class="fas fa-info text-info me-2"></i>KOLİ (Box Quantity)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #4f46e5;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --info-color: #3b82f6;
+        --light-bg: #f8fafc;
+        --border-color: #e5e7eb;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color), #7c3aed);
+        color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, var(--primary-color), #7c3aed);
+    }
+
+    .upload-area {
+        border: 3px dashed var(--border-color);
+        border-radius: 1rem;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        background: var(--light-bg);
+    }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+    .upload-icon {
+        font-size: 4rem;
+        color: var(--success-color);
+        margin-bottom: 1rem;
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .selected-file {
+        border: 2px solid var(--success-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .file-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .stat-card.success {
+            border-left-color: var(--success-color);
+        }
+
+        .stat-card.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .stat-card.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .stat-card.info {
+            border-left-color: var(--info-color);
+        }
+
+        .stat-card.primary {
+            border-left-color: var(--primary-color);
+        }
+
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+
+    .stat-card.success .stat-icon {
+        color: var(--success-color);
+    }
+
+    .stat-card.warning .stat-icon {
+        color: var(--warning-color);
+    }
+
+    .stat-card.danger .stat-icon {
+        color: var(--danger-color);
+    }
+
+    .stat-card.info .stat-icon {
+        color: var(--info-color);
+    }
+
+    .stat-card.primary .stat-icon {
+        color: var(--primary-color);
+    }
+
+    .stat-content h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-content p {
+        margin: 0;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .progress {
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+    }
+
+    .table th {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .action-buttons {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1.5rem;
+    }
+
+    .upload-requirements {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const selectedFile = document.getElementById('selectedFile');
+        const processBtn = document.getElementById('processBtn');
+        const progressSection = document.getElementById('progressSection');
+        const resultsSection = document.getElementById('resultsSection');
+
+        let processedData = null;
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            const allowedTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel'
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please select a valid Excel file (.xlsx or .xls)');
+                return;
+            }
+
+            if (file.size > 100 * 1024 * 1024) { // 10MB
+                alert('File size must be less than 10MB');
+                return;
+            }
+
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+
+            uploadArea.style.display = 'none';
+            selectedFile.style.display = 'block';
+            processBtn.disabled = false;
+        }
+
+        document.getElementById('removeFile').addEventListener('click', function() {
+            fileInput.value = '';
+            uploadArea.style.display = 'block';
+            selectedFile.style.display = 'none';
+            processBtn.disabled = true;
+            hideResults();
+        });
+
+        // Form submission
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+            showProgress('Processing Excel file...', 20);
+
+            try {
+                const response = await fetch('/Upload/ProcessExcel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    processedData = result.data;
+                    showResults(result);
+                    updateProgress('Processing completed!', 100);
+                    setTimeout(() => hideProgress(), 2000);
+                } else {
+                    hideProgress();
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                hideProgress();
+                alert('Error processing file: ' + error.message);
+            }
+        });
+
+        // Save to database
+        document.getElementById('saveToDbBtn').addEventListener('click', async function() {
+            if (!processedData || processedData.length === 0) {
+                alert('No data to save');
+                return;
+            }
+
+            showProgress('Saving to database...', 50);
+
+            try {
+                const response = await fetch('/Upload/SaveToDatabase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ data: processedData })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateProgress('Data saved successfully!', 100);
+                    alert(`Success! ${result.savedCount} new records added, ${result.updatedCount} records updated.`);
+                    setTimeout(() => hideProgress(), 2000);
+                } else {
+                    hideProgress();
+                    alert('Error saving data: ' + result.message);
+                }
+            } catch (error) {
+                hideProgress();
+                alert('Error saving data: ' + error.message);
+            }
+        });
+
+        // Download template
+        document.getElementById('downloadTemplate').addEventListener('click', function() {
+            // Create a simple template structure
+            window.open('/Upload/DownloadTemplate', '_blank');
+        });
+
+        // Export JSON
+        document.getElementById('exportJsonBtn').addEventListener('click', function() {
+            if (!processedData) return;
+
+            const dataStr = JSON.stringify(processedData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'processed_data.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Reset
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            fileInput.value = '';
+            uploadArea.style.display = 'block';
+            selectedFile.style.display = 'none';
+            processBtn.disabled = true;
+            hideResults();
+            hideProgress();
+            processedData = null;
+        });
+
+        function showProgress(status, percentage) {
+            progressSection.style.display = 'block';
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = percentage + '%';
+            document.getElementById('progressStatus').innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>${status}`;
+        }
+
+        function updateProgress(status, percentage) {
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = percentage + '%';
+            document.getElementById('progressStatus').innerHTML = `<i class="fas fa-check text-success me-2"></i>${status}`;
+        }
+
+        function hideProgress() {
+            progressSection.style.display = 'none';
+        }
+
+        function showResults(result) {
+            resultsSection.style.display = 'block';
+
+            // Update stats
+            document.getElementById('processedCount').textContent = result.totalRows || 0;
+            document.getElementById('errorCount').textContent = result.errors ? result.errors.length : 0;
+            document.getElementById('imageCount').textContent = result.images || 0;
+            document.getElementById('totalRows').textContent = result.totalRows || 0;
+
+            // Show errors if any
+            if (result.errors && result.errors.length > 0) {
+                document.getElementById('errorsSection').style.display = 'block';
+                const errorsList = document.getElementById('errorsList');
+                errorsList.innerHTML = '';
+                result.errors.forEach(error => {
+                    const li = document.createElement('li');
+                    li.textContent = error;
+                    errorsList.appendChild(li);
+                });
+            }
+
+            // Show data preview
+            const tableBody = document.getElementById('previewTableBody');
+            tableBody.innerHTML = '';
+
+            if (result.data && result.data.length > 0) {
+                result.data.slice(0, 10).forEach(item => { // Show first 10 rows
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.productCode || '-'}</td>
+                        <td>${item.color || '-'}</td>
+                        <td>${item.outerMaterial || '-'}</td>
+                        <td>${item.price ? '$' + item.price.toFixed(2) : '-'}</td>
+                        <td>${item.totalStockQuantity || 0}</td>
+                        <td><span class="badge bg-success">Ready</span></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                document.getElementById('saveToDbBtn').disabled = false;
+                document.getElementById('exportJsonBtn').disabled = false;
+            }
+        }
+
+        function hideResults() {
+            resultsSection.style.display = 'none';
+            document.getElementById('errorsSection').style.display = 'none';
+            document.getElementById('saveToDbBtn').disabled = true;
+            document.getElementById('exportJsonBtn').disabled = true;
+        }
+    });
+</script>

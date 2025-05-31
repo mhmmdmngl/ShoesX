@@ -7,14 +7,62 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\assets\revolution\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\assets\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\css\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\fonts\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\fonts\font-awesome\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\fonts\pe-icon-7-stroke\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\js\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\js\extensions\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\php\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\php\twitter\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\revolution-addons\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\revolution-addons\countdown\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\revolution-addons\snow\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\revolution-addons\typewriter\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\revolution-addons\whiteboard\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\revolution-addons\whiteboard\assets\.DS_Store" />
+    <None Include="wwwroot\assets\revolution\revolution-addons\whiteboard\js\.DS_Store" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="EPPlus" Version="8.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.5" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="MySql.Data" Version="9.3.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\assets\icons\" />
+    <Folder Include="wwwroot\assets\images\about\JPEG\" />
+    <Folder Include="wwwroot\assets\images\blog\author\" />
+    <Folder Include="wwwroot\assets\images\blog\carousel\" />
+    <Folder Include="wwwroot\assets\images\blog\small\" />
+    <Folder Include="wwwroot\assets\images\buttons\" />
+    <Folder Include="wwwroot\assets\images\chart\" />
+    <Folder Include="wwwroot\assets\images\demo\app\" />
+    <Folder Include="wwwroot\assets\images\demo\construction\" />
+    <Folder Include="wwwroot\assets\images\demo\finance\" />
+    <Folder Include="wwwroot\assets\images\demo\health\" />
+    <Folder Include="wwwroot\assets\images\demo\lawyer\" />
+    <Folder Include="wwwroot\assets\images\demo\pet\" />
+    <Folder Include="wwwroot\assets\images\demo\restaurant\" />
+    <Folder Include="wwwroot\assets\images\footer\" />
+    <Folder Include="wwwroot\assets\images\gmap\" />
+    <Folder Include="wwwroot\assets\images\landing\carousel\" />
+    <Folder Include="wwwroot\assets\images\mockups\" />
+    <Folder Include="wwwroot\assets\images\newsletter\" />
+    <Folder Include="wwwroot\assets\images\page-titles\screen\" />
+    <Folder Include="wwwroot\assets\images\pricing\" />
+    <Folder Include="wwwroot\assets\images\shop\masonary\" />
+    <Folder Include="wwwroot\assets\images\sliders\products\" />
   </ItemGroup>
 
 </Project>

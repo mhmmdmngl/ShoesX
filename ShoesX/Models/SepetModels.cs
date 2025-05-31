@@ -1,13 +1,13 @@
-﻿// ===== CART & PRODUCT DETAIL MODELS =====
+﻿// ===== CART & PRODUCT DETAIL MODELS - GÜNCEL VE EKSİKSİZ =====
 
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using WholesaleShoeStore.ViewModels;
+using System.Linq;
 
 namespace WholesaleShoeStore.Models
 {
-    // Cart entity
+    // ===== CART ENTITY =====
     public class Cart : BaseEntity
     {
         public int? CustomerId { get; set; }
@@ -43,16 +43,30 @@ namespace WholesaleShoeStore.Models
 
         public int BoxQuantity { get; set; } = 1;
 
+        // ✅ JSON'dan gelen TotalPieces değeri (kutudaki parça sayısı)
+        public int TotalPieces { get; set; } = 1;
+
         public decimal Weight { get; set; } = 0;
 
         [MaxLength(20)]
-        public string Unit { get; set; } = "PCS";
+        public string Unit { get; set; } = "KUTU";
 
         public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddHours(24);
 
+        // Navigation property
+        public Customer? Customer { get; set; }
+
+        // ✅ HESAPLANAN ÖZELLİKLER
+        public decimal PricePerPiece => IsAssorted && TotalPieces > 0 ? FinalPrice / TotalPieces : FinalPrice;
+        public decimal PricePerBox => IsAssorted ? FinalPrice * TotalPieces : FinalPrice;
+        public decimal Subtotal => Quantity * PricePerBox;
+        public int TotalPiecesOrdered => Quantity * TotalPieces;
+        public decimal TotalWeight => Weight * Quantity;
+        public bool HasDiscount => Price > FinalPrice;
+        public decimal DiscountAmount => HasDiscount ? (Price - FinalPrice) * Quantity : 0;
     }
 
-    // Cart Summary entity
+    // ===== CART SUMMARY ENTITY =====
     public class CartSummary : BaseEntity
     {
         public int? CustomerId { get; set; }
@@ -62,6 +76,7 @@ namespace WholesaleShoeStore.Models
 
         public int TotalItems { get; set; } = 0;
         public int TotalQuantity { get; set; } = 0;
+        public int TotalPieces { get; set; } = 0; // ✅ TOPLAM PARÇA SAYISI
         public decimal SubTotal { get; set; } = 0.00m;
         public decimal DiscountAmount { get; set; } = 0.00m;
         public decimal TotalAmount { get; set; } = 0.00m;
@@ -72,7 +87,7 @@ namespace WholesaleShoeStore.Models
         public Customer? Customer { get; set; }
     }
 
-    // Cart History entity
+    // ===== CART HISTORY ENTITY =====
     public class CartHistory : BaseEntity
     {
         public int? CustomerId { get; set; }
@@ -107,7 +122,7 @@ namespace WholesaleShoeStore.Models
         public Customer? Customer { get; set; }
     }
 
-    // Product Views entity
+    // ===== PRODUCT VIEWS ENTITY =====
     public class ProductView : BaseEntity
     {
         public int? CustomerId { get; set; }
@@ -129,6 +144,75 @@ namespace WholesaleShoeStore.Models
         // Navigation property
         public Customer? Customer { get; set; }
     }
+
+    // ===== HELPER SINIFLAR =====
+
+    public class ProductInfo
+    {
+        public string ProductCode { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public decimal CampaignPrice { get; set; }
+        public decimal FinalPrice { get; set; }
+        public bool IsAssorted { get; set; }
+        public int BoxQuantity { get; set; } = 1;
+        public int TotalPieces { get; set; } = 1; // ✅ JSON'dan gelen kutudaki parça sayısı
+        public int ActualStock { get; set; } // ✅ Hesaplanan stok (TotalPieces × BoxQuantity)
+        public decimal Weight { get; set; }
+        public string Unit { get; set; } = "KUTU";
+        public Dictionary<string, int> Sizes { get; set; } = new();
+        public string OuterMaterial { get; set; } = string.Empty;
+        public string InnerMaterial { get; set; } = string.Empty;
+        public string SoleMaterial { get; set; } = string.Empty;
+        public string Gender { get; set; } = string.Empty;
+        public string ProductGroup { get; set; } = string.Empty;
+
+        // ✅ Hesaplanan özellikler
+        public decimal PricePerPiece => IsAssorted && TotalPieces > 0 ? FinalPrice / TotalPieces : FinalPrice;
+        public decimal PricePerBox => IsAssorted ? FinalPrice * TotalPieces : FinalPrice;
+        public bool HasDiscount => CampaignPrice > 0 && CampaignPrice < Price;
+        public decimal DiscountPercent => HasDiscount ? Math.Round(((Price - CampaignPrice) / Price) * 100, 2) : 0;
+    }
+
+    public class CartCalculationResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public CartItemCalculations? Data { get; set; }
+
+        public static CartCalculationResult SuccessResult(CartItemCalculations data)
+        {
+            return new CartCalculationResult { Success = true, Data = data };
+        }
+
+        public static CartCalculationResult ErrorResult(string message)
+        {
+            return new CartCalculationResult { Success = false, Message = message };
+        }
+    }
+
+    public class CartItemCalculations
+    {
+        public string ProductCode { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public int Size { get; set; }
+        public int RequestedQuantity { get; set; }
+        public bool IsAssorted { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal PricePerPiece { get; set; }
+        public decimal PricePerBox { get; set; }
+        public int PiecesPerBox { get; set; }
+        public int TotalBoxes { get; set; }
+        public int TotalPieces { get; set; }
+        public decimal TotalPrice { get; set; }
+        public decimal Weight { get; set; }
+        public string Unit { get; set; } = "KUTU";
+        public string OuterMaterial { get; set; } = string.Empty;
+        public string InnerMaterial { get; set; } = string.Empty;
+        public string SoleMaterial { get; set; } = string.Empty;
+        public string Gender { get; set; } = string.Empty;
+        public string ProductGroup { get; set; } = string.Empty;
+    }
 }
 
 // ===== VIEW MODELS & DTOS =====
@@ -137,7 +221,6 @@ namespace WholesaleShoeStore.ViewModels
 {
     #region Cart ViewModels
 
-    // Add to cart request
     public class AddToCartRequest
     {
         [Required]
@@ -159,7 +242,6 @@ namespace WholesaleShoeStore.ViewModels
         public string? SessionId { get; set; }
     }
 
-    // Update cart item request
     public class UpdateCartRequest
     {
         [Required]
@@ -170,7 +252,6 @@ namespace WholesaleShoeStore.ViewModels
         public int Quantity { get; set; }
     }
 
-    // Remove from cart request
     public class RemoveFromCartRequest
     {
         [Required]
@@ -179,7 +260,6 @@ namespace WholesaleShoeStore.ViewModels
         public string? SessionId { get; set; }
     }
 
-    // Cart item DTO
     public class CartItemDto
     {
         public int Id { get; set; }
@@ -193,13 +273,20 @@ namespace WholesaleShoeStore.ViewModels
         public decimal DiscountAmount { get; set; }
         public bool IsAssorted { get; set; }
         public int BoxQuantity { get; set; }
+
+        // ✅ AYAKKABI SEKTÖRÜ İÇİN KRİTİK ALANLAR
+        public int TotalPieces { get; set; } = 1; // JSON'dan gelen kutudaki parça sayısı
+        public int TotalPiecesOrdered { get; set; } // Toplam sipariş edilen parça (Quantity × TotalPieces)
+        public decimal PricePerPiece { get; set; } // Parça başı fiyat
+        public decimal PricePerBox { get; set; } // Kutu başı fiyat
+
         public decimal Weight { get; set; }
         public decimal TotalWeight { get; set; }
         public string Unit { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime ExpiresAt { get; set; }
 
-        // Product details (joined from product data)
+        // Product details
         public string ProductName { get; set; } = string.Empty;
         public string BrandName { get; set; } = string.Empty;
         public string OuterMaterial { get; set; } = string.Empty;
@@ -212,11 +299,11 @@ namespace WholesaleShoeStore.ViewModels
         public decimal DiscountPercentage => HasDiscount ? Math.Round(((Price - FinalPrice) / Price) * 100, 0) : 0;
     }
 
-    // Cart summary DTO
     public class CartSummaryDto
     {
         public int TotalItems { get; set; }
         public int TotalQuantity { get; set; }
+        public int TotalPieces { get; set; } // ✅ TOPLAM PARÇA SAYISI
         public decimal SubTotal { get; set; }
         public decimal DiscountAmount { get; set; }
         public decimal TotalAmount { get; set; }
@@ -234,7 +321,6 @@ namespace WholesaleShoeStore.ViewModels
 
     #region Product Detail ViewModels
 
-    // Product detail request
     public class ProductDetailRequest
     {
         [Required]
@@ -247,14 +333,14 @@ namespace WholesaleShoeStore.ViewModels
         public string? SessionId { get; set; }
     }
 
-    // Product variant DTO
     public class ProductVariantDto
     {
         public string Color { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public decimal FinalPrice { get; set; }
-        public decimal ActualStock { get; set; }
+        public decimal ActualStock { get; set; } // ✅ Hesaplanan stok (TotalPieces × BoxQuantity)
         public int BoxQuantity { get; set; }
+        public int TotalPieces { get; set; } = 1; // ✅ JSON'dan gelen kutudaki parça sayısı
         public decimal Weight { get; set; }
         public string Unit { get; set; } = string.Empty;
         public bool IsOnSale => Price > FinalPrice;
@@ -263,7 +349,6 @@ namespace WholesaleShoeStore.ViewModels
         public List<int> AvailableSizes => SizeStocks.Where(s => s.Value > 0).Select(s => s.Key).OrderBy(s => s).ToList();
     }
 
-    // Product detail DTO
     public class ProductDetailDto
     {
         public string ProductCode { get; set; } = string.Empty;
@@ -291,7 +376,6 @@ namespace WholesaleShoeStore.ViewModels
         public ProductStatsDto Stats { get; set; } = new();
     }
 
-    // Product image DTO
     public class ProductImageDto
     {
         public string Url { get; set; } = string.Empty;
@@ -300,7 +384,6 @@ namespace WholesaleShoeStore.ViewModels
         public string AltText { get; set; } = string.Empty;
     }
 
-    // Related product DTO
     public class RelatedProductDto
     {
         public string ProductCode { get; set; } = string.Empty;
@@ -313,7 +396,6 @@ namespace WholesaleShoeStore.ViewModels
         public bool IsOnSale => Price > FinalPrice;
     }
 
-    // Product statistics DTO
     public class ProductStatsDto
     {
         public int ViewCount { get; set; }
@@ -328,7 +410,6 @@ namespace WholesaleShoeStore.ViewModels
 
     #region Checkout ViewModels
 
-    // Checkout request
     public class CheckoutRequest
     {
         public string? SessionId { get; set; }
@@ -354,7 +435,6 @@ namespace WholesaleShoeStore.ViewModels
         public string? Notes { get; set; }
     }
 
-    // Checkout summary DTO
     public class CheckoutSummaryDto
     {
         public CartSummaryDto Cart { get; set; } = new();

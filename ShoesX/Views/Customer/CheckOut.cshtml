@@ -645,60 +645,47 @@
 </div>
 
 <script>
+    // ===== DÜZELTİLMİŞ CHECKOUT CART MANAGER =====
+    // Checkout sayfası için sepet görüntüleme
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Checkout specific cart management - Layout'tan bağımsız
-        const CheckoutCart = {
+        console.log('🛒 Checkout Cart Manager başlatılıyor...');
+
+        const CheckoutCartManager = {
             cartItems: [],
-            subtotal: 0,
-            shipping: 0,
-            tax: 0,
-            total: 0,
+            isLoading: false,
 
-            init: function() {
-                console.log('Initializing checkout cart...');
-                this.loadCartData();
-                this.displayCart();
-                this.validateCart();
-                this.setupFormHandlers();
-            },
+            // Ana başlatma fonksiyonu
+            async init() {
+                console.log('📋 Checkout cart initialize ediliyor...');
 
-            loadCartData: function() {
                 try {
-                    // Backend'den cart yüklemeye çalış
-                    this.loadFromBackend().then(backendCart => {
-                        if (backendCart && backendCart.length > 0) {
-                            this.cartItems = backendCart;
-                            console.log('Loaded cart from backend:', this.cartItems.length, 'items');
-                            this.displayCart();
-                            return;
-                        }
+                    this.showLoadingState();
 
-                        // Fallback: localStorage'dan yükle
-                        const localCart = this.loadFromLocalStorage();
-                        if (localCart && localCart.length > 0) {
-                            this.cartItems = localCart;
-                            console.log('Loaded cart from localStorage:', this.cartItems.length, 'items');
-                        } else {
-                            this.cartItems = [];
-                            console.log('No cart items found');
-                        }
-                        this.displayCart();
-                    }).catch(error => {
-                        console.error('Error loading from backend:', error);
-                        // Fallback: localStorage'dan yükle
-                        const localCart = this.loadFromLocalStorage();
-                        this.cartItems = localCart || [];
-                        this.displayCart();
-                    });
-                } catch (error) {
-                    console.error('Error loading cart data:', error);
-                    this.cartItems = [];
+                    // Önce backend'den yüklemeye çalış
+                    const backendSuccess = await this.loadFromBackend();
+
+                    if (!backendSuccess) {
+                        // Backend başarısızsa localStorage'dan yükle
+                        this.loadFromLocalStorage();
+                    }
+
                     this.displayCart();
+                    this.validateCartForCheckout();
+
+                } catch (error) {
+                    console.error('❌ Checkout cart init hatası:', error);
+                    this.showErrorState();
+                } finally {
+                    this.hideLoadingState();
                 }
             },
 
-            loadFromBackend: async function() {
+            // Backend'den sepet verilerini yükle
+            async loadFromBackend() {
                 try {
+                    console.log('🔄 Backend\'den sepet yükleniyor...');
+
                     const response = await fetch('/Customer/GetCartForCheckout', {
                         method: 'GET',
                         headers: {
@@ -712,101 +699,199 @@
 
                     const result = await response.json();
 
-                    if (result.success && result.data && result.data.items) {
-                        return result.data.items.map(item => ({
-                            id: item.id,
-                            productCode: item.productCode,
-                            color: item.color,
-                            size: item.size || 42,
-                            quantity: item.quantity,
-                            unitPrice: item.unitPrice,
-                            totalPrice: item.totalPrice,
-                            pricePerBox: item.unitPrice,
-                            isAssorted: item.isAssorted,
-                            totalPiecesOrdered: item.quantity * (item.totalPieces || 1),
-                            outerMaterial: item.outerMaterial || 'N/A',
-                            innerMaterial: item.innerMaterial || 'N/A',
-                            sole: item.sole || 'N/A'
-                        }));
+                    if (result.success && result.data && result.data.items && result.data.items.length > 0) {
+                        this.cartItems = this.convertBackendCartItems(result.data.items);
+                        console.log('✅ Backend\'den sepet yüklendi:', this.cartItems.length, 'ürün');
+                        return true;
+                    } else {
+                        console.log('⚠️ Backend\'de sepet boş veya bulunamadı');
+                        return false;
                     }
-
-                    return null;
                 } catch (error) {
-                    console.error('Error loading from backend:', error);
-                    return null;
+                    console.error('❌ Backend sepet yükleme hatası:', error);
+                    return false;
                 }
             },
 
-            loadFromLocalStorage: function() {
+            // Backend sepet verilerini frontend formatına çevir
+            convertBackendCartItems(backendItems) {
+                return backendItems.map(item => {
+                    // ✅ TotalPieces düzgün hesaplanıyor
+                    const totalPieces = item.totalPieces || 1;
+                    const quantity = item.quantity || 1;
+                    const unitPrice = item.unitPrice || item.finalPrice || 0;
+
+                    return {
+                        id: item.id || Date.now() + Math.random(),
+                        cartId: item.id,
+                        productCode: item.productCode || '',
+                        color: item.color || '',
+                        size: item.size || 42,
+                        quantity: quantity,
+
+                        // ✅ Fiyat hesaplamaları düzeltildi
+                        unitPrice: unitPrice,
+                        pricePerBox: unitPrice,
+                        totalPrice: item.totalPrice || (quantity * unitPrice),
+
+                        // ✅ Parça hesaplamaları düzeltildi
+                        totalPieces: totalPieces,
+                        piecesPerBox: totalPieces,
+                        totalPiecesOrdered: quantity * totalPieces,
+
+                        // Ürün bilgileri
+                        isAssorted: Boolean(item.isAssorted),
+                        boxQuantity: item.boxQuantity || 0,
+                        outerMaterial: item.outerMaterial || 'N/A',
+                        innerMaterial: item.innerMaterial || 'N/A',
+                        sole: item.sole || 'N/A',
+                        productGroup: item.productGroup || 'N/A',
+                        gender: item.gender || 'UNISEX',
+                        unit: 'KUTU',
+                        addedAt: item.createdAt || new Date().toISOString()
+                    };
+                });
+            },
+
+            // localStorage'dan sepet yükle
+            loadFromLocalStorage() {
                 try {
-                    const cartData = window.wholesaleCart;
-                    if (cartData) {
-                        return JSON.parse(cartData);
+                    console.log('💾 localStorage\'dan sepet yükleniyor...');
+
+                    const savedCart = localStorage.getItem('wholesaleCart');
+                    if (savedCart) {
+                        const parsedCart = JSON.parse(savedCart);
+                        if (Array.isArray(parsedCart) && parsedCart.length > 0) {
+                            this.cartItems = parsedCart;
+                            console.log('✅ localStorage\'dan sepet yüklendi:', this.cartItems.length, 'ürün');
+                            return true;
+                        }
                     }
-                    return null;
+
+                    console.log('⚠️ localStorage\'da sepet bulunamadı');
+                    this.cartItems = [];
+                    return false;
                 } catch (error) {
-                    console.error('Error loading from localStorage:', error);
-                    return null;
+                    console.error('❌ localStorage sepet yükleme hatası:', error);
+                    this.cartItems = [];
+                    return false;
                 }
             },
 
-            displayCart: function() {
-                const cartContainer = document.getElementById('checkoutCartItems');
+            // Sepeti görüntüle
+            displayCart() {
+                console.log('🎨 Sepet görüntüleniyor:', this.cartItems.length, 'ürün');
 
-                if (!this.cartItems || this.cartItems.length === 0) {
-                    cartContainer.innerHTML = `
-                        <div class="cart-empty">
-                            <i class="fas fa-shopping-cart"></i>
-                            <h4>Your cart is empty</h4>
-                            <p>Add some products to continue with checkout</p>
-                        </div>
-                    `;
+                const cartContainer = document.getElementById('checkoutCartItems');
+                const summaryContainer = document.getElementById('checkoutSummary');
+
+                if (!cartContainer) {
+                    console.error('❌ Cart container bulunamadı!');
+                    return;
+                }
+
+                if (this.cartItems.length === 0) {
+                    this.showEmptyCart(cartContainer);
                     this.updateSummary(0, 0, 0, 0);
                     return;
                 }
 
-                // Display cart items
-                cartContainer.innerHTML = this.cartItems.map(item => `
-                    <div class="cart-item">
+                // Sepet ürünlerini listele
+                cartContainer.innerHTML = this.cartItems.map(item => this.createCartItemHTML(item)).join('');
+
+                // Özet hesapları güncelle
+                this.updateSummaryCalculations();
+            },
+
+            // ✅ Sepet ürünü HTML'i - düzeltilmiş
+            createCartItemHTML(item) {
+                const assortedInfo = item.isAssorted ?
+                    `<div class="assorted-info">
+                        <span class="assorted-badge">🏷️ Asorti Ürün</span>
+                        <small>${item.piecesPerBox} parça karışık numara</small>
+                    </div>` : '';
+
+                const pricingInfo = item.isAssorted ?
+                    `<div class="pricing-breakdown">
+                        <div>📦 ${item.quantity} kutu × ${item.piecesPerBox} parça</div>
+                        <div>💰 Parça başı: ₺${(item.unitPrice / item.piecesPerBox).toFixed(2)}</div>
+                        <div>💰 Kutu başı: ₺${item.pricePerBox.toFixed(2)}</div>
+                    </div>` :
+                    `<div class="pricing-breakdown">
+                        <div>📦 ${item.quantity} kutu × ₺${item.pricePerBox.toFixed(2)}</div>
+                    </div>`;
+
+                return `
+                    <div class="cart-item" data-item-id="${item.id}">
                         <div class="item-image">
-                            <i class="fas fa-shoe-prints" style="color: #6b7280;"></i>
+                            <div class="product-icon">👟</div>
                         </div>
                         <div class="item-details">
-                            <div class="item-name">${item.productCode} - ${item.color}</div>
-                            <div class="item-info">
-                                ${item.quantity} boxes × €${(item.pricePerBox || item.unitPrice || 0).toFixed(2)}
-                                ${item.isAssorted ? `<br><small>${item.totalPiecesOrdered || item.quantity} pieces total</small>` : ''}
-                                <br><small>Size: ${item.size || 'Mixed'}</small>
+                            <div class="item-header">
+                                <h4 class="item-name">${item.productCode} - ${item.color}</h4>
+                                ${assortedInfo}
+                            </div>
+                            <div class="item-specs">
+                                <span class="spec-tag">${item.outerMaterial}</span>
+                                <span class="spec-tag">${item.productGroup}</span>
+                                <span class="spec-tag">${item.gender}</span>
+                                <span class="spec-tag">Size: ${item.size}</span>
+                            </div>
+                            ${pricingInfo}
+                            <div class="quantity-info">
+                                <strong>Toplam: ${item.totalPiecesOrdered} parça</strong>
                             </div>
                         </div>
-                        <div class="item-price">€${(item.totalPrice || 0).toFixed(2)}</div>
+                        <div class="item-price">
+                            <div class="price-main">₺${item.totalPrice.toFixed(2)}</div>
+                            <div class="price-unit">toplam</div>
+                        </div>
                     </div>
-                `).join('');
-
-                // Calculate and update summary
-                this.calculateTotals();
+                `;
             },
 
-            calculateTotals: function() {
-                this.subtotal = this.cartItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-                this.shipping = this.calculateShipping(this.subtotal);
-                this.tax = this.calculateTax(this.subtotal);
-                this.total = this.subtotal + this.shipping + this.tax;
-
-                this.updateSummary(this.subtotal, this.shipping, this.tax, this.total);
+            // Boş sepet görünümü
+            showEmptyCart(container) {
+                container.innerHTML = `
+                    <div class="cart-empty">
+                        <div class="empty-icon">🛒</div>
+                        <h3>Sepetiniz Boş</h3>
+                        <p>Ödeme yapabilmek için sepetinize ürün eklemeniz gerekiyor.</p>
+                        <a href="/Customer/Index" class="btn-continue-shopping">
+                            <i class="fas fa-arrow-left"></i>
+                            Alışverişe Devam Et
+                        </a>
+                    </div>
+                `;
             },
 
-            calculateShipping: function(subtotal) {
-                if (subtotal > 200) return 0; // Free shipping over €200
-                if (subtotal > 100) return 10;
-                return 15;
+            // ✅ Özet hesaplamaları - düzeltilmiş
+            updateSummaryCalculations() {
+                if (this.cartItems.length === 0) {
+                    this.updateSummary(0, 0, 0, 0);
+                    return;
+                }
+
+                // ✅ Doğru hesaplamalar
+                const subtotal = this.cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+                const shipping = this.calculateShipping(subtotal);
+                const tax = this.calculateTax(subtotal);
+                const total = subtotal + shipping + tax;
+
+                this.updateSummary(subtotal, shipping, tax, total);
+
+                // Debug bilgisi
+                console.log('💰 Sepet hesaplamaları:', {
+                    items: this.cartItems.length,
+                    subtotal: subtotal.toFixed(2),
+                    shipping: shipping.toFixed(2),
+                    tax: tax.toFixed(2),
+                    total: total.toFixed(2)
+                });
             },
 
-            calculateTax: function(subtotal) {
-                return subtotal * 0.18; // 18% VAT
-            },
-
-            updateSummary: function(subtotal, shipping, tax, total) {
+            // Özet display'ini güncelle
+            updateSummary(subtotal, shipping, tax, total) {
                 const elements = {
                     subtotal: document.getElementById('cartSubtotal'),
                     shipping: document.getElementById('cartShipping'),
@@ -814,103 +899,351 @@
                     total: document.getElementById('cartTotal')
                 };
 
-                if (elements.subtotal) elements.subtotal.textContent = `€${subtotal.toFixed(2)}`;
-                if (elements.shipping) elements.shipping.textContent = `€${shipping.toFixed(2)}`;
-                if (elements.tax) elements.tax.textContent = `€${tax.toFixed(2)}`;
-                if (elements.total) elements.total.textContent = `€${total.toFixed(2)}`;
+                if (elements.subtotal) elements.subtotal.textContent = `₺${subtotal.toFixed(2)}`;
+                if (elements.shipping) elements.shipping.textContent = `₺${shipping.toFixed(2)}`;
+                if (elements.tax) elements.tax.textContent = `₺${tax.toFixed(2)}`;
+                if (elements.total) elements.total.textContent = `₺${total.toFixed(2)}`;
+
+                // Debug için console'da da göster
+                console.log('🧾 Fatura Özeti:', {
+                    'Ara Toplam': `₺${subtotal.toFixed(2)}`,
+                    'Kargo': `₺${shipping.toFixed(2)}`,
+                    'KDV (%18)': `₺${tax.toFixed(2)}`,
+                    'Genel Toplam': `₺${total.toFixed(2)}`
+                });
             },
 
-            validateCart: function() {
-                const placeOrderBtn = document.getElementById('placeOrderBtn');
+            // Kargo hesaplama
+            calculateShipping(subtotal) {
+                if (subtotal >= 500) return 0; // 500₺ üzeri ücretsiz kargo
+                if (subtotal >= 200) return 25; // 200-500₺ arası düşük kargo
+                return 50; // Standart kargo
+            },
 
-                if (!this.cartItems || this.cartItems.length === 0) {
-                    if (placeOrderBtn) {
-                        placeOrderBtn.disabled = true;
-                        placeOrderBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Cart is Empty';
-                    }
+            // KDV hesaplama (%18)
+            calculateTax(subtotal) {
+                return subtotal * 0.18;
+            },
+
+            // Checkout için sepet validasyonu
+            validateCartForCheckout() {
+                const checkoutBtn = document.getElementById('placeOrderBtn');
+
+                if (!checkoutBtn) return;
+
+                if (this.cartItems.length === 0) {
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Sepet Boş';
+                    checkoutBtn.classList.add('disabled');
                 } else {
-                    if (placeOrderBtn) {
-                        placeOrderBtn.disabled = false;
-                        placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Place Order';
-                    }
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.innerHTML = '<i class="fas fa-lock"></i> Siparişi Tamamla';
+                    checkoutBtn.classList.remove('disabled');
                 }
             },
 
-            setupFormHandlers: function() {
-                const checkoutForm = document.getElementById('checkoutForm');
-                if (checkoutForm) {
-                    checkoutForm.addEventListener('submit', (e) => {
-                        if (!this.cartItems || this.cartItems.length === 0) {
-                            e.preventDefault();
-                            this.showToast('Please add items to your cart before placing an order.', 'error');
-                            return false;
-                        }
-
-                        // Show loading state
-                        const submitBtn = document.getElementById('placeOrderBtn');
-                        if (submitBtn) {
-                            submitBtn.disabled = true;
-                            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Order...';
-                        }
-                    });
+            // Loading durumları
+            showLoadingState() {
+                const container = document.getElementById('checkoutCartItems');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="loading-state">
+                            <div class="loading-spinner"></div>
+                            <p>Sepet yükleniyor...</p>
+                        </div>
+                    `;
                 }
             },
 
-            showToast: function(message, type = 'info') {
+            hideLoadingState() {
+                // displayCart tarafından handle ediliyor
+            },
+
+            showErrorState() {
+                const container = document.getElementById('checkoutCartItems');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="error-state">
+                            <div class="error-icon">⚠️</div>
+                            <h3>Sepet Yükleme Hatası</h3>
+                            <p>Sepetiniz yüklenirken bir hata oluştu.</p>
+                            <button onclick="window.location.reload()" class="btn-retry">
+                                <i class="fas fa-refresh"></i>
+                                Tekrar Dene
+                            </button>
+                        </div>
+                    `;
+                }
+            },
+
+            // Toast mesajları
+            showToast(message, type = 'info') {
+                console.log(`${type.toUpperCase()}: ${message}`);
+
+                // Basit toast implementasyonu
                 const toast = document.createElement('div');
-                toast.className = `alert alert-${type === 'error' ? 'danger' : 'success'}`;
+                toast.className = `checkout-toast toast-${type}`;
                 toast.style.cssText = `
                     position: fixed;
                     top: 2rem;
                     right: 2rem;
+                    background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};
+                    color: white;
+                    padding: 1rem 1.5rem;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                     z-index: 9999;
-                    max-width: 400px;
-                    animation: slideIn 0.3s ease;
-                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                    animation: slideInRight 0.3s ease;
                 `;
 
                 toast.innerHTML = `
-                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'}"></i>
-                    ${message}
-                    <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 1rem;">&times;</button>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
                 `;
 
                 document.body.appendChild(toast);
 
-                // Auto remove after 5 seconds
                 setTimeout(() => {
-                    if (toast.parentElement) {
-                        toast.remove();
-                    }
-                }, 5000);
+                    toast.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
             }
         };
 
-        // Initialize checkout cart
-        CheckoutCart.init();
+        // CSS animasyonları ekle
+        const style = document.createElement('style');
+        style.textContent = `
+    @@keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
 
-        // Global cart functions - safely ignore layout calls
-        window.updateCartDisplay = function() {
-            // Safely ignore - checkout has its own display
-            console.log('Cart display update ignored on checkout page');
-        };
+    @@keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
 
-        window.updateCartBadge = function() {
-            // Safely ignore - checkout doesn't need badge updates
-            console.log('Cart badge update ignored on checkout page');
-        };
+            .cart-item {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                padding: 1.5rem 0;
+                border-bottom: 1px solid #e5e7eb;
+                transition: background-color 0.2s ease;
+            }
 
-        // Prevent any shoeStore related errors
-        if (typeof window.shoeStore === 'undefined') {
-            window.shoeStore = {
-                cart: CheckoutCart.cartItems,
-                updateCartDisplay: function() {
-                    CheckoutCart.displayCart();
-                }
-            };
-        }
+            .cart-item:hover {
+                background-color: #f9fafb;
+                border-radius: 8px;
+                margin: 0 -1rem;
+                padding: 1.5rem 1rem;
+            }
+
+            .item-image {
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .product-icon {
+                font-size: 2rem;
+                opacity: 0.7;
+            }
+
+            .item-details {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .item-header {
+                margin-bottom: 0.75rem;
+            }
+
+            .item-name {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #1f2937;
+                margin: 0 0 0.5rem 0;
+            }
+
+            .assorted-info {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .assorted-badge {
+                background: #fbbf24;
+                color: #92400e;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+
+            .item-specs {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .spec-tag {
+                background: #f3f4f6;
+                color: #6b7280;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+
+            .pricing-breakdown {
+                background: #f8fafc;
+                padding: 0.75rem;
+                border-radius: 6px;
+                margin-bottom: 0.5rem;
+                font-size: 0.875rem;
+                color: #374151;
+            }
+
+            .pricing-breakdown div {
+                margin-bottom: 0.25rem;
+            }
+
+            .pricing-breakdown div:last-child {
+                margin-bottom: 0;
+            }
+
+            .quantity-info {
+                color: #1f2937;
+                font-size: 0.9rem;
+            }
+
+            .item-price {
+                text-align: right;
+                flex-shrink: 0;
+            }
+
+            .price-main {
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: #1f2937;
+            }
+
+            .price-unit {
+                font-size: 0.75rem;
+                color: #6b7280;
+                margin-top: 0.25rem;
+            }
+
+            .cart-empty {
+                text-align: center;
+                padding: 4rem 2rem;
+                color: #6b7280;
+            }
+
+            .empty-icon {
+                font-size: 4rem;
+                margin-bottom: 1rem;
+                opacity: 0.5;
+            }
+
+            .cart-empty h3 {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 0.5rem;
+            }
+
+            .btn-continue-shopping {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: #3b82f6;
+                color: white;
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 500;
+                margin-top: 1rem;
+                transition: background-color 0.2s ease;
+            }
+
+            .btn-continue-shopping:hover {
+                background: #2563eb;
+                text-decoration: none;
+                color: white;
+            }
+
+            .loading-state, .error-state {
+                text-align: center;
+                padding: 3rem 1rem;
+                color: #6b7280;
+            }
+
+            .loading-spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid #f3f4f6;
+                border-top: 3px solid #3b82f6;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 1rem auto;
+            }
+
+            .error-icon {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+
+            .btn-retry {
+                background: #ef4444;
+                color: white;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                margin-top: 1rem;
+                transition: background-color 0.2s ease;
+            }
+
+            .btn-retry:hover {
+                background: #dc2626;
+            }
+
+    @@keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            .disabled {
+                opacity: 0.6;
+                cursor: not-allowed !important;
+            }
+
+            .disabled:hover {
+                transform: none !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Checkout cart manager'ı başlat
+        CheckoutCartManager.init();
+
+        // Global erişim için
+        window.CheckoutCartManager = CheckoutCartManager;
+
+        console.log('✅ Checkout Cart Manager hazır!');
     });
-
     // Add CSS animation
     const style = document.createElement('style');
     style.textContent = `

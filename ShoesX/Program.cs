@@ -10,15 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC servislerini ekle
 builder.Services.AddControllersWithViews();
 //// Kestrel ayarlarý - dýþ baðlantýlarý kabul etmek için
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(5000); // HTTP
-    // HTTPS için (opsiyonel):
-    // options.ListenAnyIP(5001, listenOptions => 
-    // {
-    //     listenOptions.UseHttps("/path/to/certificate.pfx", "certificate_password");
-    // });
-});
+//builder.WebHost.ConfigureKestrel(options =>
+//{
+//    options.ListenAnyIP(5000); // HTTP
+//    // HTTPS için (opsiyonel):
+//    // options.ListenAnyIP(5001, listenOptions => 
+//    // {
+//    //     listenOptions.UseHttps("/path/to/certificate.pfx", "certificate_password");
+//    // });
+//});
 // Session desteði ekle
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

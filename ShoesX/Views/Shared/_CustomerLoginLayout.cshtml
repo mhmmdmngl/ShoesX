@@ -5,64 +5,598 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Wholesale Shoe Store</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" href="~/css/customer-login.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --white: #ffffff;
+            --shadow-soft: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-medium: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --shadow-large: 0 35px 60px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @@keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Floating particles background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+            .particle:nth-child(1) {
+                width: 80px;
+                height: 80px;
+                left: 10%;
+                animation-delay: 0s;
+            }
+
+            .particle:nth-child(2) {
+                width: 60px;
+                height: 60px;
+                left: 20%;
+                animation-delay: 2s;
+            }
+
+            .particle:nth-child(3) {
+                width: 40px;
+                height: 40px;
+                left: 30%;
+                animation-delay: 4s;
+            }
+
+            .particle:nth-child(4) {
+                width: 100px;
+                height: 100px;
+                left: 40%;
+                animation-delay: 6s;
+            }
+
+            .particle:nth-child(5) {
+                width: 50px;
+                height: 50px;
+                left: 60%;
+                animation-delay: 8s;
+            }
+
+            .particle:nth-child(6) {
+                width: 70px;
+                height: 70px;
+                left: 80%;
+                animation-delay: 10s;
+            }
+
+        @@keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr;
+            border-radius: 24px;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-large);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @@media (min-width: 992px) {
+            .login-wrapper {
+                grid-template-columns: 1fr 1fr;
+                max-height: 700px;
+            }
+        }
+
+        @@keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Left Panel - Brand Section */
+        .brand-panel {
+            background: var(--primary-gradient);
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .brand-panel::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+                animation: rotate 20s linear infinite;
+            }
+
+        @@keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .brand-logo {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 30px;
+        }
+
+            .brand-logo i {
+                font-size: 80px;
+                color: var(--white);
+                filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+        @@keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .brand-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .brand-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+            font-weight: 300;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 20px 10px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+            .feature-item:hover {
+                transform: translateY(-5px);
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            .feature-item i {
+                font-size: 2rem;
+                color: var(--white);
+                margin-bottom: 10px;
+                display: block;
+            }
+
+            .feature-item p {
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 0.9rem;
+                font-weight: 500;
+                margin: 0;
+            }
+
+        /* Right Panel - Login Form Area */
+        .login-panel {
+            background: var(--white);
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .home-link {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .home-link:hover {
+                color: #5a67d8;
+                transform: translateY(-2px);
+            }
+
+        /* Login Form Specific Styles */
+        .modern-login-card {
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .forgot-password {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+            .forgot-password:hover {
+                color: #5a67d8;
+            }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            color: var(--text-light);
+            z-index: 2;
+            font-size: 1.1rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 16px 16px 16px 50px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+            .form-control:focus {
+                border-color: #667eea;
+                background: var(--white);
+                box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            z-index: 2;
+            padding: 4px;
+            transition: color 0.3s ease;
+        }
+
+            .password-toggle:hover {
+                color: #667eea;
+            }
+
+        .form-options {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            accent-color: #667eea;
+        }
+
+        .form-check-label {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+            .login-button:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+            }
+
+            .login-button:active {
+                transform: translateY(0);
+            }
+
+            .login-button:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+
+        .business-inquiry {
+            text-align: center;
+            padding: 24px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+            .business-inquiry p {
+                color: var(--text-light);
+                margin: 0;
+                font-size: 0.95rem;
+            }
+
+        .modern-alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: none;
+        }
+
+        /* Mobile Responsiveness */
+        @@media (max-width: 991px) {
+            .brand-panel {
+                padding: 40px 30px;
+            }
+
+            .login-panel {
+                padding: 40px 30px;
+            }
+
+            .brand-title {
+                font-size: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .home-link {
+                position: static;
+                margin-bottom: 20px;
+                align-self: flex-end;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .main-container {
+                padding: 10px;
+            }
+
+            .brand-panel, .login-panel {
+                padding: 30px 20px;
+            }
+
+            .login-wrapper {
+                border-radius: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="login-container">
-            <!-- Sidebar - Left Column -->
-            <div class="login-sidebar col-lg-5 d-none d-lg-flex">
-                <div class="text-center w-100">
-                    <div class="brand-logo">
-                        <i class="fas fa-shoe-prints"></i>
-                    </div>
-                    <h1>Wholesale Shoe Store</h1>
-                    <p class="lead">Your Trusted Partner for Bulk Shoe Purchases</p>
+    <!-- Floating Particles Background -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
 
-                    <div class="feature-section">
-                        <div class="d-flex justify-content-center">
-                            <div class="feature-item">
-                                <i class="fas fa-box-open"></i>
-                                <p>Bulk Orders</p>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-tags"></i>
-                                <p>Wholesale Prices</p>
-                            </div>
-                            <div class="feature-item">
-                                <i class="fas fa-truck"></i>
-                                <p>Fast Shipping</p>
-                            </div>
-                        </div>
-                    </div>
+    <div class="main-container">
+        <div class="login-wrapper">
+            <!-- Brand Panel -->
+            <div class="brand-panel">
+                <div class="brand-logo">
+                    <i class="fas fa-shoe-prints"></i>
+                </div>
+                <h1 class="brand-title">Wholesale Shoe Store</h1>
+                <p class="brand-subtitle">Your Trusted Partner for Bulk Shoe Purchases</p>
 
-                    <div class="footer">
-                        <p>&copy; @DateTime.Now.Year - Wholesale Shoe Store</p>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fas fa-box-open"></i>
+                        <p>Bulk Orders</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-tags"></i>
+                        <p>Wholesale Prices</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-truck-fast"></i>
+                        <p>Fast Shipping</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content - Right Column -->
-            <div class="login-main col-lg-7 bg-white">
-                <div class="login-header">
-                    <div class="d-lg-none">
-                        <h4 class="m-0 text-primary">
-                            <i class="fas fa-shoe-prints"></i> Wholesale Shoe Store
-                        </h4>
-                    </div>
-                    <a href="/" class="home-link">
-                        <i class="fas fa-home"></i> Home
-                    </a>
-                </div>
+            <!-- Login Panel -->
+            <div class="login-panel">
+                <a href="/" class="home-link">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
 
-                <div class="login-content">
-                    @RenderBody()
-                </div>
-
-                <div class="mt-auto text-center d-block d-lg-none">
-                    <p class="text-muted">&copy; @DateTime.Now.Year - Wholesale Shoe Store</p>
-                </div>
+                @RenderBody()
             </div>
         </div>
     </div>
